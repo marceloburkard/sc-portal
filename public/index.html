@@ -1129,7 +1129,15 @@
   async function loadTenders() {
     try {
       const res = await fetch(`${API_BASE}/api/tenders`);
-      if (!res.ok) throw new Error('Service responded with ' + res.status);
+      if (!res.ok) {
+        let detail = 'Service responded with ' + res.status;
+        try {
+          const errBody = await res.json();
+          if (errBody.message) detail = errBody.message;
+          else if (errBody.error) detail = errBody.error;
+        } catch (_) { /* ignore */ }
+        throw new Error(detail);
+      }
       const data = await res.json();
       allTenders = data.tenders || [];
       els.lastSync.textContent = data.lastUpdated ? new Date(data.lastUpdated).toLocaleString('en-CA') : 'never';
@@ -1146,11 +1154,16 @@
       els.connSlot.innerHTML = '';
       render();
     } catch (e) {
+      let hint = '';
+      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        hint = 'On Vercel, open the project dashboard → Storage → Blob, create a store, connect it to this project, then redeploy.';
+      } else {
+        hint = 'Make sure the backend is running: <code>node server/server.js</code> and open <code>http://localhost:8787</code> (not as a local file).';
+      }
       els.connSlot.innerHTML = `
         <div class="conn-error">
           <strong>Can't reach the tracker service.</strong><br>
-          Make sure the backend is running: <code>node server/server.js</code> in the project folder,
-          and that this page is opened at <code>http://localhost:8787</code> (not as a local file).
+          ${hint}
           <br><br>Details: ${escapeHtml(e.message)}
         </div>`;
       els.cardList.innerHTML = '';

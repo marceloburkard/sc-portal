@@ -1,8 +1,5 @@
 {
   "version": 2,
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/api" }
-  ],
   "crons": [
     {
       "path": "/api/cron/refresh",
@@ -10,7 +7,7 @@
     }
   ],
   "functions": {
-    "api/index.js": {
+    "api/[[...path]].js": {
       "maxDuration": 60
     }
   }

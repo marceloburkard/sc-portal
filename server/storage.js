@@ -8,9 +8,19 @@ const path = require('path');
 const DATA_DIR = path.join(__dirname, 'data');
 const IS_VERCEL = Boolean(process.env.VERCEL);
 const BLOB_PREFIX = 'data/';
+const BLOB_ACCESS = process.env.BLOB_ACCESS === 'private' ? 'private' : 'public';
 
 function blobPath(filename) {
   return `${BLOB_PREFIX}${filename}`;
+}
+
+function blobOptions() {
+  return { access: BLOB_ACCESS };
+}
+
+function isMissingBlobError(err) {
+  const msg = err && err.message ? err.message : String(err);
+  return msg.includes('No blob credentials') || msg.includes('No read-write token');
 }
 
 async function streamToText(stream) {
@@ -24,9 +34,14 @@ async function streamToText(stream) {
 async function readJson(filename) {
   if (IS_VERCEL) {
     const { get } = require('@vercel/blob');
-    const result = await get(blobPath(filename), { access: 'private' });
-    if (!result || !result.stream) return null;
-    return JSON.parse(await streamToText(result.stream));
+    try {
+      const result = await get(blobPath(filename), blobOptions());
+      if (!result || !result.stream) return null;
+      return JSON.parse(await streamToText(result.stream));
+    } catch (err) {
+      if (isMissingBlobError(err)) throw err;
+      return null;
+    }
   }
 
   const filePath = path.join(DATA_DIR, filename);
@@ -40,7 +55,7 @@ async function writeJson(filename, data) {
   if (IS_VERCEL) {
     const { put } = require('@vercel/blob');
     await put(blobPath(filename), content, {
-      access: 'private',
+      ...blobOptions(),
       addRandomSuffix: false,
       allowOverwrite: true,
       contentType: 'application/json',
@@ -68,7 +83,9 @@ async function ensureDataFiles(defaults) {
 module.exports = {
   DATA_DIR,
   IS_VERCEL,
+  BLOB_ACCESS,
   readJson,
   writeJson,
   ensureDataFiles,
+  isMissingBlobError,
 };

@@ -18,7 +18,7 @@ const cors = require('cors');
 const fetch = require('node-fetch');
 const { parse } = require('csv-parse/sync');
 const path = require('path');
-const { readJson, writeJson, ensureDataFiles } = require('./storage');
+const { readJson, writeJson, ensureDataFiles, isMissingBlobError } = require('./storage');
 
 // Bump this string whenever you deploy a meaningful change. The portal
 // displays it in the masthead and on the /api/version endpoint, so you can
@@ -385,10 +385,23 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get('/api/health', (req, res) => {
+  res.json({
+    ok: true,
+    vercel: Boolean(process.env.VERCEL),
+    blobConfigured: Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID),
+  });
+});
+
 let initPromise = null;
 app.use(async (req, res, next) => {
   try {
-    if (!initPromise) initPromise = ensureInitialized();
+    if (!initPromise) {
+      initPromise = ensureInitialized().catch((err) => {
+        initPromise = null;
+        throw err;
+      });
+    }
     await initPromise;
     next();
   } catch (err) {
@@ -670,6 +683,24 @@ app.get('/api/cron/refresh', async (req, res) => {
 
   const result = await fetchAndFilter();
   res.json(result);
+});
+
+app.use((err, req, res, next) => {
+  console.error('[error]', err);
+
+  if (isMissingBlobError(err)) {
+    return res.status(503).json({
+      error: 'Storage not configured',
+      message:
+        'Create a Vercel Blob store (Storage → Blob) and connect it to this project. ' +
+        'Vercel will set BLOB_READ_WRITE_TOKEN automatically. Redeploy after connecting.',
+    });
+  }
+
+  res.status(500).json({
+    error: 'Internal server error',
+    message: err.message || 'Unexpected error',
+  });
 });
 
 module.exports = {
