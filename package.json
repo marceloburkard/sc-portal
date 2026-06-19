@@ -4,12 +4,17 @@
   "description": "Daily tracker for EN578-172870 THS Stream 5 (Computer Application/Website Support) tender notices from CanadaBuys open data.",
   "main": "server/server.js",
   "scripts": {
-    "start": "node server/server.js"
+    "start": "node server/server.js",
+    "dev": "node server/server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
+    "@vercel/blob": "^2.4.1",
     "cors": "^2.8.6",
     "csv-parse": "^7.0.0",
     "express": "^5.2.1",

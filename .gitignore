@@ -32,3 +32,6 @@ Desktop.ini
 # Optional build / test output
 coverage/
 dist/
+
+# Vercel
+.vercel/
