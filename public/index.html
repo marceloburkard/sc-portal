@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Canada Buys Tenders</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+
+  :root {
+    --paper: #F7F5F0;
+    --ink: #1A1A18;
+    --ink-soft: #54514A;
+    --line: #D8D3C6;
+    --red: #A4282D;
+    --red-deep: #7A1D21;
+    --green: #2F5D3A;
+    --amber: #8A6116;
+    --card: #FFFFFF;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    background-image:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.015) 0px, rgba(0,0,0,0.015) 1px, transparent 1px, transparent 3px);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+
+  a { color: var(--red); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--red);
+    outline-offset: 2px;
+  }
+
+  .masthead {
+    border-bottom: 3px solid var(--ink);
+    padding: 28px clamp(16px, 5vw, 56px) 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .masthead-title {
+    font-family: 'Source Serif 4', serif;
+    font-weight: 700;
+    font-size: clamp(28px, 4vw, 42px);
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+  }
+  .masthead-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 6px;
+    letter-spacing: 0.01em;
+  }
+  .masthead-meta {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+  .masthead-meta strong { color: var(--ink); font-weight: 600; }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    padding: 16px clamp(16px, 5vw, 56px);
+    border-bottom: 1px solid var(--line);
+    background: rgba(255,255,255,0.5);
+  }
+  .toolbar input[type="search"] {
+    flex: 1;
+    min-width: 180px;
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    border-radius: 3px;
+  }
+  .pill-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 7px 12px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: 20px;
+    cursor: pointer;
+    color: var(--ink-soft);
+    transition: all .15s;
+  }
+  .pill[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .pill:hover { border-color: var(--ink); }
+
+  .btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 9px 16px;
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--red-deep); }
+  .btn:disabled { background: var(--line); cursor: default; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+  }
+  .btn-ghost:hover { border-color: var(--ink); color: var(--ink); background: transparent; }
+
+  main { padding: 24px clamp(16px, 5vw, 56px) 80px; max-width: 1100px; margin: 0 auto; }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    margin-bottom: 28px;
+  }
+  .stat {
+    background: var(--card);
+    padding: 16px 18px;
+  }
+  .stat-num {
+    font-family: 'Source Serif 4', serif;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    margin-top: 6px;
+  }
+
+  .empty-state {
+    border: 1px dashed var(--line);
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+  .empty-state strong { display: block; color: var(--ink); font-size: 16px; margin-bottom: 6px; font-family: 'Source Serif 4', serif; }
+
+  .card-list { display: flex; flex-direction: column; gap: 14px; }
+
+  .tender-card {
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--ink);
+    padding: 18px 20px 16px;
+    transition: border-color .15s;
+  }
+  .tender-card[data-status="open"] { border-left-color: var(--green); }
+  .tender-card[data-status="closing-soon"] { border-left-color: var(--amber); }
+  .tender-card[data-status="closed"] { border-left-color: var(--ink-soft); opacity: 0.6; }
+
+  .new-tab {
+    position: absolute;
+    top: -1px;
+    right: 18px;
+    background: var(--red);
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    padding: 4px 10px 5px;
+    border-radius: 0 0 4px 4px;
+  }
+
+  .tender-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+  .tender-top-link {
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background .12s;
+    margin: -4px -6px 4px;
+    padding: 4px 6px;
+  }
+  .tender-top-link:hover {
+    background: rgba(164,40,45,0.05);
+    text-decoration: none;
+  }
+  .tender-top-link:hover .tender-title { color: var(--red); }
+  .tender-sol {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--red);
+    font-weight: 600;
+  }
+  .tender-title {
+    font-family: 'Source Serif 4', serif;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 4px 0 0;
+  }
+  .tender-org {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 2px;
+  }
+  .tender-desc {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+    margin: 10px 0 12px;
+  }
+  .tender-meta-row {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--line);
+    padding-top: 10px;
+  }
+  .tender-meta-row span strong { color: var(--ink); font-weight: 600; }
+  .tender-link { margin-left: auto; font-family: 'Inter', sans-serif; font-weight: 500; font-size: 13px; }
+
+  footer {
+    text-align: center;
+    padding: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--line);
+  }
+
+  .log-toggle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    text-align: center;
+    margin-top: 20px;
+  }
+  .log-panel {
+    display: none;
+    margin-top: 12px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    padding: 14px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .log-panel.open { display: block; }
+  .log-row { padding: 4px 0; border-bottom: 1px solid var(--line); }
+  .log-row:last-child { border-bottom: none; }
+
+  .conn-error {
+    border: 1px solid var(--red);
+    background: #FBEAEA;
+    color: var(--red-deep);
+    padding: 16px 18px;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .conn-error code {
+    background: rgba(0,0,0,0.06);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  @media (max-width: 640px) {
+    .stat-row { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .masthead { flex-direction: column; align-items: flex-start; }
+    .masthead-meta { text-align: left; }
+    .tender-link { margin-left: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+
+  /* ---- Filters panel ---- */
+  .filters-panel {
+    display: none;
+    border-bottom: 1px solid var(--line);
+    background: #FFFDF8;
+  }
+  .filters-panel.open { display: block; }
+  .filters-inner {
+    padding: 20px clamp(16px, 5vw, 56px) 24px;
+    max-width: 720px;
+  }
+  .filters-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 18px;
+  }
+  .filters-title {
+    font-family: 'Source Serif 4', serif;
+    font-weight: 700;
+    font-size: 20px;
+  }
+  .filters-sub {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin-top: 3px;
+  }
+  .btn-close {
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    color: var(--ink-soft);
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .btn-close:hover { border-color: var(--ink); color: var(--ink); }
+
+  .filters-label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .filters-hint {
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin-top: 4px;
+  }
+  .filters-text-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    border-radius: 3px;
+  }
+  .filters-text-input:focus { border-color: var(--red); }
+
+  .match-mode-row { display: flex; gap: 10px; }
+  .radio-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    cursor: pointer;
+    background: var(--card);
+  }
+  .radio-pill input { margin: 0; accent-color: var(--red); }
+
+  .keyword-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .keyword-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 7px 8px 7px 12px;
+  }
+  .keyword-row input {
+    flex: 1;
+    border: none;
+    background: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .keyword-row input:focus { outline: none; }
+  .keyword-remove-btn {
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    line-height: 1;
+  }
+  .keyword-remove-btn:hover { color: var(--red); background: rgba(164,40,45,0.08); }
+
+  .add-keyword-row { display: flex; gap: 8px; }
+  .add-keyword-row input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px dashed var(--line);
+    background: transparent;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    border-radius: 3px;
+  }
+  .add-keyword-row input:focus { border-color: var(--red); border-style: solid; }
+
+  .filters-footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+  .btn-ghost-sm {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+  }
+  .btn-ghost-sm:hover { color: var(--red); }
+  .filters-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--green);
+  }
+  .filters-status.error { color: var(--red); }
+
+  .filters-hint code {
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(0,0,0,0.06);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 11.5px;
+  }
+
+  .tester-box {
+    margin-top: 20px;
+    padding: 14px 16px;
+    border: 1px dashed var(--line);
+    border-radius: 4px;
+    background: rgba(164,40,45,0.025);
+  }
+  .tester-result {
+    margin-top: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+  .tester-result strong { color: var(--ink); }
+  .tester-sample { margin-top: 6px; padding-left: 10px; border-left: 2px solid var(--line); }
+  .tester-sample div { margin-bottom: 3px; }
+
+  .match-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 3px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+  }
+  .match-badge.yes { background: rgba(47,93,58,0.12); color: var(--green); }
+  .match-badge.no { background: rgba(84,81,74,0.12); color: var(--ink-soft); }
+  .match-badge.sa-match {
+    background: rgba(164,40,45,0.12);
+    color: var(--red);
+    border: 1px solid rgba(164,40,45,0.25);
+  }
+
+  .columns-debug {
+    display: none;
+    margin-top: 16px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--card);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--ink);
+    max-height: 320px;
+    overflow-y: auto;
+  }
+  .columns-debug.open { display: block; }
+  .columns-debug .col-header-list {
+    line-height: 1.7;
+    word-break: break-all;
+  }
+  .columns-debug .col-name {
+    display: inline-block;
+    background: rgba(0,0,0,0.05);
+    padding: 2px 7px;
+    border-radius: 3px;
+    margin: 2px 4px 2px 0;
+  }
+  .columns-debug .col-name.url-like {
+    background: rgba(47,93,58,0.12);
+    color: var(--green);
+    font-weight: 600;
+  }
+  .columns-debug .col-sample {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-soft);
+  }
+
+  /* ---- Tabs ---- */
+  .tab-bar {
+    display: flex;
+    gap: 4px;
+    padding: 0 clamp(16px, 5vw, 56px);
+    border-bottom: 1px solid var(--line);
+    background: rgba(255,255,255,0.4);
+  }
+  .tab-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 12px 16px 11px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn.active { color: var(--ink); border-bottom-color: var(--red); font-weight: 500; }
+  .saved-count-badge {
+    background: var(--red);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 10px;
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ---- Category dropdown ---- */
+  .category-select {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: 20px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    max-width: 220px;
+  }
+  .category-select:hover { border-color: var(--ink); }
+
+  /* ---- Contracting authority block ---- */
+  .ca-block {
+    margin: 4px 0 12px;
+    padding: 10px 12px;
+    background: rgba(31,93,58,0.04);
+    border: 1px solid rgba(47,93,58,0.15);
+    border-radius: 4px;
+  }
+  .ca-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--green);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .ca-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+  }
+  .ca-grid strong { color: var(--ink); font-weight: 500; }
+  .ca-grid a { color: var(--red); }
+
+  /* ---- Save button on cards ---- */
+  .save-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--ink-soft);
+    border-radius: 3px;
+    cursor: pointer;
+    margin-left: 8px;
+  }
+  .save-btn:hover { border-color: var(--red); color: var(--red); }
+  .save-btn.saved {
+    background: rgba(47,93,58,0.1);
+    color: var(--green);
+    border-color: rgba(47,93,58,0.3);
+    cursor: default;
+  }
+
+  /* ---- Saved table ---- */
+  .saved-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 18px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .saved-title {
+    font-family: 'Source Serif 4', serif;
+    font-weight: 700;
+    font-size: 22px;
+  }
+  .saved-sub {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+    max-width: 560px;
+  }
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+  .saved-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background: var(--card);
+  }
+  .saved-table th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--paper);
+    border-bottom: 2px solid var(--ink);
+    cursor: pointer;
+    white-space: nowrap;
+    color: var(--ink-soft);
+    user-select: none;
+  }
+  .saved-table th:hover { color: var(--ink); }
+  .sort-arrow { font-size: 9px; color: var(--red); }
+  .saved-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .saved-table tr:last-child td { border-bottom: none; }
+  .saved-table tr:hover td { background: rgba(0,0,0,0.015); }
+  .saved-empty-row {
+    text-align: center;
+    color: var(--ink-soft);
+    padding: 32px 16px !important;
+    white-space: normal !important;
+  }
+  .remove-saved-btn {
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 4px 8px;
+    border-radius: 3px;
+  }
+  .remove-saved-btn:hover { color: var(--red); background: rgba(164,40,45,0.08); }
+
+  .saved-actions-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+  }
+  .lookup-link {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--red);
+    text-decoration: none;
+    border: 1px solid rgba(164,40,45,0.3);
+    padding: 3px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .lookup-link:hover { background: rgba(164,40,45,0.08); text-decoration: none; }
+
+  .editable-cell {
+    cursor: pointer;
+    position: relative;
+  }
+  .editable-cell:hover {
+    background: rgba(164,40,45,0.05);
+    outline: 1px dashed rgba(164,40,45,0.3);
+  }
+  .editable-cell:hover::after {
+    content: '✎';
+    margin-left: 6px;
+    font-size: 10px;
+    color: var(--ink-soft);
+  }
+  .cell-edit-input {
+    width: 100%;
+    border: 1px solid var(--red);
+    border-radius: 2px;
+    padding: 3px 6px;
+    font-family: inherit;
+    font-size: inherit;
+    background: var(--card);
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div>
+    <div class="masthead-title">Canada Buys Tenders</div>
+  </div>
+  <div class="masthead-meta" id="masthead-meta">
+    Last sync: <strong id="last-sync">—</strong><br>
+    Next auto-check: <strong>09:00 daily</strong><br>
+    Portal version: <strong id="portal-version">—</strong>
+  </div>
+</header>
+
+<div class="tab-bar" role="tablist">
+  <button class="tab-btn active" data-tab="tenders" role="tab" aria-selected="true">Tenders</button>
+  <button class="tab-btn" data-tab="saved" role="tab" aria-selected="false">Saved Contacts <span id="saved-count-badge" class="saved-count-badge" style="display:none">0</span></button>
+</div>
+
+<div class="toolbar" id="tenders-toolbar">
+  <input type="search" id="search-input" placeholder="Search title, organization, solicitation number…" aria-label="Search tenders">
+  <div class="pill-group" role="group" aria-label="Filter by status">
+    <button class="pill" data-filter="all" aria-pressed="true">All</button>
+    <button class="pill" data-filter="open" aria-pressed="false">Open</button>
+    <button class="pill" data-filter="new" aria-pressed="false">New today</button>
+    <button class="pill" data-filter="closed" aria-pressed="false">Closed</button>
+  </div>
+  <select id="category-select" class="category-select" aria-label="Filter by category">
+    <option value="">All categories</option>
+  </select>
+  <div class="pill-group" role="group" aria-label="Scope" style="margin-left:auto">
+    <button class="pill scope-pill" data-scope="matches" aria-pressed="false">Matches only</button>
+    <button class="pill scope-pill" data-scope="everything" aria-pressed="true">All notices (unfiltered)</button>
+  </div>
+  <button class="btn btn-ghost" id="filters-btn">Filters ⚙</button>
+  <button class="btn" id="refresh-btn">Check now</button>
+</div>
+
+<div class="filters-panel" id="filters-panel">
+  <div class="filters-inner">
+    <div class="filters-head">
+      <div>
+        <div class="filters-title">Filter configuration</div>
+        <div class="filters-sub">Controls which CanadaBuys notices are matched. Changes apply on the next refresh.</div>
+        <div class="filters-sub" id="version-wipe-note" style="display:none; margin-top:6px; color:var(--amber)">
+          ⚠ Keywords were reset to empty because this is a new portal version. Add your keywords again below.
+        </div>
+      </div>
+      <button class="btn-close" id="filters-close" aria-label="Close filters panel">✕</button>
+    </div>
+
+    <div class="filters-hint" style="margin-bottom:8px">
+      Matching is keyword-only. There is no separate solicitation-number filter — an earlier
+      version required "EN578-172870" to appear in a dedicated column, but that column
+      sometimes holds a different reference number while EN578-172870 appears only in the
+      description text, which silently excluded real matches. If you want to require it,
+      just add <code>EN578-172870</code> as a keyword below.
+    </div>
+
+    <label class="filters-label" style="margin-top:18px">Match mode</label>
+    <div class="match-mode-row">
+      <label class="radio-pill"><input type="radio" name="matchMode" value="any"> Match ANY keyword</label>
+      <label class="radio-pill"><input type="radio" name="matchMode" value="all"> Match ALL keywords</label>
+    </div>
+    <div class="filters-hint">"Any" is recommended — a notice matches if it contains at least one keyword below.</div>
+
+    <label class="filters-label" style="margin-top:18px">Keywords</label>
+    <div class="filters-hint" style="margin-bottom:8px">Matched case-insensitively against the notice title, description, and GSIN. Add the exact category wording (e.g. "5.1 Computer") to stay precise — broad single words like "computer" alone will over-match.</div>
+    <div id="keyword-list" class="keyword-list"></div>
+    <div class="add-keyword-row">
+      <input type="text" id="new-keyword-input" placeholder="Add a keyword or phrase…">
+      <button class="btn btn-ghost" id="add-keyword-btn">Add</button>
+    </div>
+
+    <label class="filters-label" style="margin-top:22px">Supply Arrangement References</label>
+    <div class="filters-hint" style="margin-bottom:8px">
+      Separate from keywords above. These are exact SA numbers Insi is qualified under (e.g. <code>EN578-172870</code> for THS).
+      A tender matching one of these is tagged on its card as a direct SA match, distinct from a general keyword match —
+      useful because SA numbers don't always appear in the feed text (sometimes only the keyword signal catches a tender,
+      sometimes only the SA reference does), so both run together rather than one replacing the other.
+    </div>
+    <div id="sa-reference-list" class="keyword-list"></div>
+    <div class="add-keyword-row">
+      <input type="text" id="new-sa-reference-input" placeholder="e.g. EN578-172870">
+      <button class="btn btn-ghost" id="add-sa-reference-btn">Add</button>
+    </div>
+
+    <div class="tester-box">
+      <label class="filters-label">Test a keyword before adding it</label>
+      <div class="filters-hint" style="margin-bottom:8px">Checks how many currently-downloaded notices contain this text, without saving anything. Use this to sanity-check a phrase before committing it as a filter.</div>
+      <div class="add-keyword-row">
+        <input type="text" id="test-keyword-input" placeholder="e.g. 5.1 computer">
+        <button class="btn btn-ghost" id="test-keyword-btn">Test</button>
+      </div>
+      <div id="tester-result" class="tester-result"></div>
+    </div>
+
+    <div class="filters-footer">
+      <button class="btn-ghost-sm" id="reset-filters-btn">Reset to defaults</button>
+      <button class="btn-ghost-sm" id="show-columns-btn" style="margin-left:16px">Show raw CSV columns</button>
+      <div style="flex:1"></div>
+      <span id="filters-status" class="filters-status"></span>
+      <button class="btn" id="save-filters-btn">Save filters</button>
+    </div>
+
+    <div id="columns-debug" class="columns-debug"></div>
+  </div>
+</div>
+
+<main>
+  <div id="tenders-tab-content" class="tab-content active">
+    <div id="conn-error-slot"></div>
+
+    <div class="stat-row" id="stat-row">
+      <div class="stat"><div class="stat-num" id="stat-total">—</div><div class="stat-label" id="stat-total-label">Tracked matches</div></div>
+      <div class="stat"><div class="stat-num" id="stat-open">—</div><div class="stat-label">Currently open</div></div>
+      <div class="stat"><div class="stat-num" id="stat-new">—</div><div class="stat-label">New today</div></div>
+      <div class="stat"><div class="stat-num" id="stat-closing">—</div><div class="stat-label">Closing &lt; 7 days</div></div>
+    </div>
+
+    <div class="card-list" id="card-list">
+      <div class="empty-state">
+        <strong>Loading tenders…</strong>
+        Connecting to the local tracker service.
+      </div>
+    </div>
+
+    <div class="log-toggle" id="log-toggle">Show fetch history ▾</div>
+    <div class="log-panel" id="log-panel"></div>
+  </div>
+
+  <div id="saved-tab-content" class="tab-content">
+    <div class="saved-head">
+      <div>
+        <div class="saved-title">Saved Contacts</div>
+        <div class="saved-sub">Requester / Contracting Authority contacts you've saved from the Tenders tab. Stored locally on this server — not synced anywhere else.</div>
+      </div>
+      <button class="btn btn-ghost" id="export-saved-btn">Export CSV</button>
+    </div>
+
+    <div class="table-wrap">
+      <table class="saved-table" id="saved-table">
+        <thead>
+          <tr>
+            <th data-sort="organization">Department <span class="sort-arrow"></span></th>
+            <th data-sort="contactName">Name <span class="sort-arrow"></span></th>
+            <th data-sort="contactTitle">Title <span class="sort-arrow"></span></th>
+            <th data-sort="contactEmail">Email <span class="sort-arrow"></span></th>
+            <th data-sort="contactPhone">Phone <span class="sort-arrow"></span></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="saved-table-body">
+          <tr><td colspan="6" class="saved-empty-row">No contacts saved yet — open the Tenders tab and click "Save" on any card.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<footer>
+  Source: CanadaBuys open tender notices (public dataset, Government of Canada) &middot; Filtered locally by your saved keywords &middot; Not an official CanadaBuys product
+</footer>
+
+<script>
+  const API_BASE = window.location.origin; // assumes portal is served by the same backend
+
+  // Bump this alongside APP_VERSION in server/server.js whenever you deploy
+  // a change to either file, so a mismatch (e.g. you copied a new
+  // server.js but forgot to copy the matching index.html, or vice versa)
+  // is visible in the masthead instead of silently causing confusing bugs.
+  const FRONTEND_VERSION = '1.5.0';
+
+  const els = {
+    lastSync: document.getElementById('last-sync'),
+    portalVersion: document.getElementById('portal-version'),
+    cardList: document.getElementById('card-list'),
+    statTotal: document.getElementById('stat-total'),
+    statOpen: document.getElementById('stat-open'),
+    statNew: document.getElementById('stat-new'),
+    statClosing: document.getElementById('stat-closing'),
+    refreshBtn: document.getElementById('refresh-btn'),
+    searchInput: document.getElementById('search-input'),
+    pills: document.querySelectorAll('.pill'),
+    connSlot: document.getElementById('conn-error-slot'),
+    logToggle: document.getElementById('log-toggle'),
+    logPanel: document.getElementById('log-panel'),
+    filtersBtn: document.getElementById('filters-btn'),
+    filtersPanel: document.getElementById('filters-panel'),
+    filtersClose: document.getElementById('filters-close'),
+    keywordList: document.getElementById('keyword-list'),
+    saReferenceList: document.getElementById('sa-reference-list'),
+    newSaReferenceInput: document.getElementById('new-sa-reference-input'),
+    addSaReferenceBtn: document.getElementById('add-sa-reference-btn'),
+    newKeywordInput: document.getElementById('new-keyword-input'),
+    addKeywordBtn: document.getElementById('add-keyword-btn'),
+    saveFiltersBtn: document.getElementById('save-filters-btn'),
+    resetFiltersBtn: document.getElementById('reset-filters-btn'),
+    filtersStatus: document.getElementById('filters-status'),
+    scopePills: document.querySelectorAll('.scope-pill'),
+    statTotalLabel: document.getElementById('stat-total-label'),
+    testKeywordInput: document.getElementById('test-keyword-input'),
+    testKeywordBtn: document.getElementById('test-keyword-btn'),
+    testerResult: document.getElementById('tester-result'),
+    showColumnsBtn: document.getElementById('show-columns-btn'),
+    columnsDebug: document.getElementById('columns-debug'),
+    categorySelect: document.getElementById('category-select'),
+    tabBtns: document.querySelectorAll('.tab-btn'),
+    tendersTabContent: document.getElementById('tenders-tab-content'),
+    savedTabContent: document.getElementById('saved-tab-content'),
+    savedTableBody: document.getElementById('saved-table-body'),
+    savedCountBadge: document.getElementById('saved-count-badge'),
+    exportSavedBtn: document.getElementById('export-saved-btn'),
+    savedTable: document.getElementById('saved-table'),
+  };
+
+  let workingKeywords = [];
+  let workingSaReferences = [];
+
+  let allTenders = [];
+  let currentFilter = 'all';
+  let currentSearch = '';
+  let currentScope = 'everything'; // 'matches' | 'everything' — defaults to showing all notices
+  let currentCategory = '';
+  let savedIds = new Set();
+  let savedTenders = [];
+  let savedSort = { column: 'savedAt', dir: 'desc' };
+
+  function daysUntil(dateStr) {
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    if (isNaN(d)) return null;
+    const diff = (d - new Date()) / (1000 * 60 * 60 * 24);
+    return Math.ceil(diff);
+  }
+
+  function statusOf(t) {
+    if ((t.status || '').toLowerCase().includes('closed') || (t.status || '').toLowerCase().includes('removed')) return 'closed';
+    const days = daysUntil(t.closingDate);
+    if (days !== null && days <= 7 && days >= 0) return 'closing-soon';
+    return 'open';
+  }
+
+  function render() {
+    const q = currentSearch.trim().toLowerCase();
+    let scoped = currentScope === 'matches'
+      ? allTenders.filter((t) => t.matchesFilter !== false)
+      : allTenders;
+
+    let filtered = scoped.filter((t) => {
+      if (q) {
+        const hay = `${t.title} ${t.organization} ${t.solicitationNumber} ${t.description}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (currentCategory && t.category !== currentCategory) return false;
+      if (currentFilter === 'open') return statusOf(t) !== 'closed';
+      if (currentFilter === 'closed') return statusOf(t) === 'closed';
+      if (currentFilter === 'new') return t.isNew;
+      return true;
+    });
+
+    els.statTotalLabel.textContent = currentScope === 'matches' ? 'Tracked matches' : 'Total notices shown';
+    els.statTotal.textContent = scoped.length;
+    els.statOpen.textContent = scoped.filter((t) => statusOf(t) !== 'closed').length;
+    els.statNew.textContent = scoped.filter((t) => t.isNew).length;
+    els.statClosing.textContent = scoped.filter((t) => statusOf(t) === 'closing-soon').length;
+
+    if (filtered.length === 0) {
+      els.cardList.innerHTML = `
+        <div class="empty-state">
+          <strong>No tenders match this view</strong>
+          ${currentScope === 'everything' ? 'Try a different search term — this view shows every notice in the daily feed, unfiltered.' : 'Try clearing the search or switching filters. New matching notices appear here automatically each morning.'}
+        </div>`;
+      return;
+    }
+
+    els.cardList.innerHTML = filtered.map((t) => {
+      const st = statusOf(t);
+      const days = daysUntil(t.closingDate);
+      let closingLabel = t.closingDate ? new Date(t.closingDate).toLocaleDateString('en-CA') : '—';
+      if (days !== null && days >= 0 && st !== 'closed') closingLabel += ` (${days}d)`;
+      // The SA reference tag is shown whenever a tender actually matched
+      // one — in BOTH "Matches only" and "All notices" views — since
+      // knowing which qualified Supply Arrangement a tender references is
+      // useful information on its own, not just a diagnostic. The more
+      // generic KEYWORD MATCH / no-match labels stay confined to the
+      // unfiltered diagnostic view, where they're useful for tuning
+      // filters but would just be noise in the normal curated view.
+      let badge = '';
+      const hasSaMatch = t.matchType === 'sa-reference' || t.matchType === 'both';
+      if (hasSaMatch) {
+        const refList = (t.matchedSaReferences || []).join(', ');
+        badge += `<span class="match-badge sa-match" title="Directly references: ${escapeAttr(refList)}">SA: ${escapeHtml(refList || '—')}</span>`;
+      }
+      if (currentScope === 'everything') {
+        if (t.matchType === 'both') {
+          badge += `<span class="match-badge yes">+ KEYWORD</span>`;
+        } else if (t.matchType === 'keyword') {
+          badge += `<span class="match-badge yes">KEYWORD MATCH</span>`;
+        } else if (t.matchType === 'none') {
+          badge += `<span class="match-badge no">no match</span>`;
+        }
+      }
+
+      // Always produce a usable link: use the notice's own URL if the feed
+      // provided one, otherwise fall back to a CanadaBuys keyword search
+      // using their real query structure (search_filter, record_per_page,
+      // current_tab, and "words" for the actual search term — NOT
+      // "search_term", which CanadaBuys does not recognize and silently
+      // ignores, landing on the generic unfiltered listings page instead).
+      const linkHref = t.url
+        ? t.url
+        : `https://canadabuys.canada.ca/en/tender-opportunities?search_filter=&record_per_page=50&current_tab=t&words=${encodeURIComponent(t.solicitationNumber || t.title || '')}`;
+      const linkLabel = t.url ? 'View on CanadaBuys →' : 'Open on CanadaBuys →';
+
+      const ca = t.contractingAuthority || {};
+      const caBlock = `
+            <div class="ca-block">
+              <div class="ca-label">Requester (Contracting Authority)</div>
+              <div class="ca-grid">
+                <span>Department: <strong>${escapeHtml(ca.department || t.organization || 'NA')}</strong></span>
+                <span>Name: <strong>${escapeHtml(ca.name || 'NA')}</strong></span>
+                <span>Title: <strong>${escapeHtml(ca.title || 'NA')}</strong></span>
+                <span>Email: <strong>${ca.email ? `<a href="mailto:${escapeAttr(ca.email)}">${escapeHtml(ca.email)}</a>` : 'NA'}</strong></span>
+                <span>Phone: <strong>${escapeHtml(ca.phone || 'NA')}</strong></span>
+              </div>
+            </div>`;
+
+      const isSaved = savedIds.has(t.id);
+
+      return `
+        <div class="tender-card" data-status="${st}">
+          ${t.isNew ? '<div class="new-tab">NEW</div>' : ''}
+          <a class="tender-top tender-top-link" href="${escapeAttr(linkHref)}" target="_blank" rel="noopener">
+            <div>
+              <div class="tender-sol">${escapeHtml(t.solicitationNumber || '—')}${badge}</div>
+              <div class="tender-title">${escapeHtml(t.title || 'Untitled notice')}</div>
+              <div class="tender-org">${escapeHtml(t.organization || 'Organization not specified')}${t.category ? ` &middot; ${escapeHtml(t.category)}` : ''}</div>
+            </div>
+          </a>
+          ${t.description ? `<div class="tender-desc">${escapeHtml(t.description)}${t.description.length >= 600 ? '…' : ''}</div>` : ''}
+          ${caBlock}
+          <div class="tender-meta-row">
+            <span>Published: <strong>${t.publishedDate ? new Date(t.publishedDate).toLocaleDateString('en-CA') : '—'}</strong></span>
+            <span>Closes: <strong>${closingLabel}</strong></span>
+            <span>Status: <strong>${escapeHtml(t.status || 'Open')}</strong></span>
+            <a class="tender-link" href="${escapeAttr(linkHref)}" target="_blank" rel="noopener">${linkLabel}</a>
+            <button class="save-btn ${isSaved ? 'saved' : ''}" data-id="${escapeAttr(t.id)}" ${isSaved ? 'disabled' : ''}>${isSaved ? '✓ Saved' : 'Save'}</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    els.cardList.querySelectorAll('.save-btn:not(.saved)').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        const id = e.target.dataset.id;
+        const tender = allTenders.find((t) => t.id === id);
+        if (!tender) return;
+        await saveTender(tender);
+      });
+    });
+  }
+
+  function escapeHtml(str) {
+    return String(str || '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function escapeAttr(str) { return escapeHtml(str); }
+
+  async function loadTenders() {
+    try {
+      const res = await fetch(`${API_BASE}/api/tenders`);
+      if (!res.ok) throw new Error('Service responded with ' + res.status);
+      const data = await res.json();
+      allTenders = data.tenders || [];
+      els.lastSync.textContent = data.lastUpdated ? new Date(data.lastUpdated).toLocaleString('en-CA') : 'never';
+
+      const backendVersion = data.appVersion || 'unknown';
+      if (backendVersion !== FRONTEND_VERSION) {
+        els.portalVersion.innerHTML = `<span style="color:var(--red)">${escapeHtml(FRONTEND_VERSION)} page / ${escapeHtml(backendVersion)} server ⚠ mismatch</span>`;
+        els.portalVersion.title = 'The HTML page and the backend server are reporting different versions — one of them likely wasn\'t redeployed. Re-copy both files and restart.';
+      } else {
+        els.portalVersion.textContent = backendVersion;
+        els.portalVersion.title = data.appVersionDate ? `Released ${data.appVersionDate}` : '';
+      }
+
+      els.connSlot.innerHTML = '';
+      render();
+    } catch (e) {
+      els.connSlot.innerHTML = `
+        <div class="conn-error">
+          <strong>Can't reach the tracker service.</strong><br>
+          Make sure the backend is running: <code>node server/server.js</code> in the project folder,
+          and that this page is opened at <code>http://localhost:8787</code> (not as a local file).
+          <br><br>Details: ${escapeHtml(e.message)}
+        </div>`;
+      els.cardList.innerHTML = '';
+    }
+  }
+
+  async function loadLog() {
+    try {
+      const res = await fetch(`${API_BASE}/api/log`);
+      const data = await res.json();
+      els.logPanel.innerHTML = (data.runs || []).map((r) => `
+        <div class="log-row">
+          ${new Date(r.startedAt).toLocaleString('en-CA')} — 
+          scanned ${r.rawRowCount ?? '?'} notices, 
+          ${r.matchCount ?? 0} match${r.matchCount === 1 ? '' : 'es'}, 
+          ${r.newCount ?? 0} new
+          ${r.error ? ` — <span style="color:var(--red)">error: ${escapeHtml(r.error)}</span>` : ''}
+        </div>`).join('') || '<div class="log-row">No runs recorded yet.</div>';
+    } catch (e) {
+      els.logPanel.innerHTML = `<div class="log-row">Could not load history.</div>`;
+    }
+  }
+
+  els.refreshBtn.addEventListener('click', async () => {
+    els.refreshBtn.disabled = true;
+    els.refreshBtn.textContent = 'Checking…';
+    try {
+      await fetch(`${API_BASE}/api/refresh`, { method: 'POST' });
+      await loadTenders();
+      await loadCategories();
+      await loadLog();
+    } finally {
+      els.refreshBtn.disabled = false;
+      els.refreshBtn.textContent = 'Check now';
+    }
+  });
+
+  els.searchInput.addEventListener('input', (e) => {
+    currentSearch = e.target.value;
+    render();
+  });
+
+  els.pills.forEach((pill) => {
+    pill.addEventListener('click', () => {
+      els.pills.forEach((p) => p.setAttribute('aria-pressed', 'false'));
+      pill.setAttribute('aria-pressed', 'true');
+      currentFilter = pill.dataset.filter;
+      render();
+    });
+  });
+
+  els.scopePills.forEach((pill) => {
+    pill.addEventListener('click', () => {
+      els.scopePills.forEach((p) => p.setAttribute('aria-pressed', 'false'));
+      pill.setAttribute('aria-pressed', 'true');
+      currentScope = pill.dataset.scope;
+      render();
+    });
+  });
+
+  els.logToggle.addEventListener('click', () => {
+    const isOpen = els.logPanel.classList.toggle('open');
+    els.logToggle.textContent = isOpen ? 'Hide fetch history ▴' : 'Show fetch history ▾';
+    if (isOpen) loadLog();
+  });
+
+  // ---- Filters panel ----
+
+  function renderKeywordList() {
+    els.keywordList.innerHTML = workingKeywords.map((kw, i) => `
+      <div class="keyword-row" data-index="${i}">
+        <input type="text" value="${escapeAttr(kw)}" data-index="${i}">
+        <button class="keyword-remove-btn" data-index="${i}" title="Remove keyword" aria-label="Remove keyword">✕</button>
+      </div>`).join('');
+
+    els.keywordList.querySelectorAll('input').forEach((input) => {
+      input.addEventListener('input', (e) => {
+        const i = Number(e.target.dataset.index);
+        workingKeywords[i] = e.target.value;
+      });
+    });
+    els.keywordList.querySelectorAll('.keyword-remove-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const i = Number(e.target.dataset.index);
+        workingKeywords.splice(i, 1);
+        renderKeywordList();
+      });
+    });
+  }
+
+  function renderSaReferenceList() {
+    els.saReferenceList.innerHTML = workingSaReferences.map((ref, i) => `
+      <div class="keyword-row" data-index="${i}">
+        <input type="text" value="${escapeAttr(ref)}" data-index="${i}">
+        <button class="keyword-remove-btn" data-index="${i}" title="Remove SA reference" aria-label="Remove SA reference">✕</button>
+      </div>`).join('');
+
+    els.saReferenceList.querySelectorAll('input').forEach((input) => {
+      input.addEventListener('input', (e) => {
+        const i = Number(e.target.dataset.index);
+        workingSaReferences[i] = e.target.value;
+      });
+    });
+    els.saReferenceList.querySelectorAll('.keyword-remove-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const i = Number(e.target.dataset.index);
+        workingSaReferences.splice(i, 1);
+        renderSaReferenceList();
+      });
+    });
+  }
+
+  async function loadSettingsIntoPanel() {
+    try {
+      const res = await fetch(`${API_BASE}/api/settings`);
+      const settings = await res.json();
+      workingKeywords = [...(settings.keywords || [])];
+      workingSaReferences = [...(settings.saReferences || [])];
+      renderKeywordList();
+      renderSaReferenceList();
+      document.querySelectorAll('input[name="matchMode"]').forEach((r) => {
+        r.checked = r.value === (settings.matchMode || 'any');
+      });
+      els.filtersStatus.textContent = '';
+      els.filtersStatus.className = 'filters-status';
+
+      const wipeNote = document.getElementById('version-wipe-note');
+      wipeNote.style.display = workingKeywords.length === 0 ? 'block' : 'none';
+    } catch (e) {
+      els.filtersStatus.textContent = 'Could not load current filters.';
+      els.filtersStatus.className = 'filters-status error';
+    }
+  }
+
+  els.filtersBtn.addEventListener('click', () => {
+    const willOpen = !els.filtersPanel.classList.contains('open');
+    els.filtersPanel.classList.toggle('open');
+    if (willOpen) loadSettingsIntoPanel();
+  });
+  els.filtersClose.addEventListener('click', () => els.filtersPanel.classList.remove('open'));
+
+  els.addKeywordBtn.addEventListener('click', () => {
+    const val = els.newKeywordInput.value.trim();
+    if (!val) return;
+    workingKeywords.push(val);
+    els.newKeywordInput.value = '';
+    renderKeywordList();
+  });
+  els.newKeywordInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      els.addKeywordBtn.click();
+    }
+  });
+
+  els.addSaReferenceBtn.addEventListener('click', () => {
+    const val = els.newSaReferenceInput.value.trim();
+    if (!val) return;
+    workingSaReferences.push(val);
+    els.newSaReferenceInput.value = '';
+    renderSaReferenceList();
+  });
+  els.newSaReferenceInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      els.addSaReferenceBtn.click();
+    }
+  });
+
+  els.saveFiltersBtn.addEventListener('click', async () => {
+    const matchMode = document.querySelector('input[name="matchMode"]:checked')?.value || 'any';
+    const payload = {
+      keywords: workingKeywords.map((k) => k.trim()).filter(Boolean),
+      saReferences: workingSaReferences.map((r) => r.trim()).filter(Boolean),
+      matchMode,
+    };
+    if (payload.keywords.length === 0) {
+      els.filtersStatus.textContent = 'Add at least one keyword.';
+      els.filtersStatus.className = 'filters-status error';
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/api/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Save failed');
+      workingKeywords = data.settings.keywords;
+      workingSaReferences = data.settings.saReferences || [];
+      renderKeywordList();
+      renderSaReferenceList();
+      document.getElementById('version-wipe-note').style.display = 'none';
+
+      // Apply the new filter to already-downloaded data immediately, rather
+      // than waiting for tomorrow's scheduled fetch.
+      const reapplyRes = await fetch(`${API_BASE}/api/settings/reapply`, { method: 'POST' });
+      const reapplyData = await reapplyRes.json();
+      els.filtersStatus.textContent = `Saved and applied — ${reapplyData.matchCount} of ${reapplyData.total} stored notices now match.`;
+      els.filtersStatus.className = 'filters-status';
+      await loadTenders();
+    } catch (e) {
+      els.filtersStatus.textContent = e.message;
+      els.filtersStatus.className = 'filters-status error';
+    }
+  });
+
+  els.testKeywordBtn.addEventListener('click', async () => {
+    const keyword = els.testKeywordInput.value.trim();
+    if (!keyword) return;
+    els.testerResult.textContent = 'Testing…';
+    try {
+      const res = await fetch(`${API_BASE}/api/settings/test-keyword`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keyword }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Test failed');
+      let html = `<strong>${data.hitCount}</strong> of currently downloaded notices contain "<strong>${escapeHtml(data.keyword)}</strong>"`;
+      if (data.sample.length) {
+        html += `<div class="tester-sample">${data.sample.map((s) => `<div>• ${escapeHtml(s.solicitationNumber)} — ${escapeHtml(s.title)}</div>`).join('')}</div>`;
+      }
+      els.testerResult.innerHTML = html;
+    } catch (e) {
+      els.testerResult.textContent = 'Test failed: ' + e.message;
+    }
+  });
+  els.testKeywordInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      els.testKeywordBtn.click();
+    }
+  });
+
+  els.resetFiltersBtn.addEventListener('click', async () => {
+    if (!confirm('Reset filters to empty? This discards all custom keywords and SA references.')) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/settings/reset`, { method: 'POST' });
+      const data = await res.json();
+      workingKeywords = [...data.settings.keywords];
+      workingSaReferences = [...(data.settings.saReferences || [])];
+      renderKeywordList();
+      renderSaReferenceList();
+      document.querySelectorAll('input[name="matchMode"]').forEach((r) => {
+        r.checked = r.value === data.settings.matchMode;
+      });
+      els.filtersStatus.textContent = 'Reset to defaults. Press "Check now" to apply.';
+      els.filtersStatus.className = 'filters-status';
+    } catch (e) {
+      els.filtersStatus.textContent = 'Reset failed.';
+      els.filtersStatus.className = 'filters-status error';
+    }
+  });
+
+  els.showColumnsBtn.addEventListener('click', async () => {
+    const willOpen = !els.columnsDebug.classList.contains('open');
+    els.columnsDebug.classList.toggle('open');
+    if (!willOpen) return;
+
+    els.columnsDebug.innerHTML = 'Fetching live CSV headers from CanadaBuys… this re-downloads the file, give it a few seconds.';
+    try {
+      const res = await fetch(`${API_BASE}/api/debug-columns`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to load columns');
+
+      const urlLikeWords = ['url', 'notice', 'link', 'id'];
+      const headerHtml = data.headers.map((h) => {
+        const isUrlLike = urlLikeWords.some((w) => h.toLowerCase().includes(w));
+        return `<span class="col-name${isUrlLike ? ' url-like' : ''}">${escapeHtml(h)}</span>`;
+      }).join(' ');
+
+      let sampleHtml = '';
+      if (data.sampleRows && data.sampleRows[0]) {
+        const urlLikeKeys = Object.keys(data.sampleRows[0]).filter((k) =>
+          urlLikeWords.some((w) => k.toLowerCase().includes(w))
+        );
+        if (urlLikeKeys.length) {
+          sampleHtml = `<div class="col-sample">Sample values from columns that look URL/notice-related (first row):<br>` +
+            urlLikeKeys.map((k) => `<strong>${escapeHtml(k)}</strong>: ${escapeHtml(data.sampleRows[0][k] || '(empty)')}`).join('<br>') +
+            `</div>`;
+        } else {
+          sampleHtml = `<div class="col-sample">No column name contains "url", "notice", "link", or "id" — the direct notice link may not be exposed in this feed at all, or uses different wording than expected.</div>`;
+        }
+      }
+
+      els.columnsDebug.innerHTML = `
+        <div style="margin-bottom:8px;color:var(--ink-soft)">${data.headers.length} columns found in the live feed. Highlighted ones look URL/notice/ID related:</div>
+        <div class="col-header-list">${headerHtml}</div>
+        ${sampleHtml}`;
+    } catch (e) {
+      els.columnsDebug.innerHTML = `Could not load columns: ${escapeHtml(e.message)}`;
+    }
+  });
+
+  // ---- Category dropdown ----
+
+  async function loadCategories() {
+    try {
+      const res = await fetch(`${API_BASE}/api/categories`);
+      const data = await res.json();
+      const current = els.categorySelect.value;
+      els.categorySelect.innerHTML = '<option value="">All categories</option>' +
+        (data.categories || []).map((c) => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join('');
+      // Preserve selection across refreshes if it still exists.
+      if (current && (data.categories || []).includes(current)) els.categorySelect.value = current;
+    } catch (e) {
+      // Non-fatal — dropdown just stays at "All categories".
+    }
+  }
+
+  els.categorySelect.addEventListener('change', (e) => {
+    currentCategory = e.target.value;
+    render();
+  });
+
+  // ---- Tabs ----
+
+  els.tabBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      els.tabBtns.forEach((b) => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+      const tab = btn.dataset.tab;
+      els.tendersTabContent.classList.toggle('active', tab === 'tenders');
+      els.savedTabContent.classList.toggle('active', tab === 'saved');
+      document.getElementById('tenders-toolbar').style.display = tab === 'tenders' ? '' : 'none';
+      if (tab === 'saved') loadSaved();
+    });
+  });
+
+  // ---- Saved tenders ----
+
+  async function loadSaved() {
+    try {
+      const res = await fetch(`${API_BASE}/api/saved`);
+      const data = await res.json();
+      savedTenders = data.saved || [];
+      savedIds = new Set(savedTenders.map((t) => t.id));
+      updateSavedBadge();
+      renderSavedTable();
+    } catch (e) {
+      els.savedTableBody.innerHTML = `<tr><td colspan="6" class="saved-empty-row">Could not load saved contacts: ${escapeHtml(e.message)}</td></tr>`;
+    }
+  }
+
+  function updateSavedBadge() {
+    if (savedTenders.length > 0) {
+      els.savedCountBadge.style.display = 'inline-block';
+      els.savedCountBadge.textContent = savedTenders.length;
+    } else {
+      els.savedCountBadge.style.display = 'none';
+    }
+  }
+
+  async function saveTender(tender) {
+    try {
+      const res = await fetch(`${API_BASE}/api/saved`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(tender),
+      });
+      let data = null;
+      try { data = await res.json(); } catch { /* response had no JSON body */ }
+      if (!res.ok && res.status !== 409) {
+        throw new Error((data && data.error) || `Save failed (HTTP ${res.status})`);
+      }
+      savedIds.add(tender.id);
+      await loadSaved();
+      render();
+    } catch (e) {
+      alert('Could not save tender: ' + e.message);
+    }
+  }
+
+  async function removeSaved(id) {
+    try {
+      await fetch(`${API_BASE}/api/saved/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      savedIds.delete(id);
+      await loadSaved();
+      render();
+    } catch (e) {
+      alert('Could not remove: ' + e.message);
+    }
+  }
+
+  async function updateSavedField(id, field, value) {
+    try {
+      const res = await fetch(`${API_BASE}/api/saved/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ field, value }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Update failed');
+      const idx = savedTenders.findIndex((t) => t.id === id);
+      if (idx !== -1) savedTenders[idx] = data.tender;
+      renderSavedTable();
+    } catch (e) {
+      alert('Could not update: ' + e.message);
+      renderSavedTable(); // revert visual edit state on failure
+    }
+  }
+
+  function startEditingCell(cell) {
+    if (cell.querySelector('input')) return; // already editing
+    const row = cell.closest('tr');
+    const id = row.dataset.id;
+    const field = cell.dataset.field;
+    const currentText = cell.textContent.trim();
+    const currentValue = currentText === 'NA' ? '' : currentText;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = currentValue;
+    input.className = 'cell-edit-input';
+    input.placeholder = `Enter ${field}…`;
+    cell.innerHTML = '';
+    cell.appendChild(input);
+    input.focus();
+    input.select();
+
+    const commit = () => {
+      const newValue = input.value.trim();
+      updateSavedField(id, field, newValue);
+    };
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+      if (e.key === 'Escape') { e.preventDefault(); renderSavedTable(); }
+    });
+  }
+
+  function getSavedSortValue(t, col) {
+    const ca = t.contractingAuthority || {};
+    switch (col) {
+      case 'contactName': return ca.name || '';
+      case 'contactTitle': return ca.title || '';
+      case 'contactEmail': return ca.email || '';
+      case 'contactPhone': return ca.phone || '';
+      default: return t[col] || '';
+    }
+  }
+
+  function buildGedsSearchUrl(fullName) {
+    // GEDS's automated/URL-based search only reliably returns results for
+    // single-word terms — multi-word names tend to redirect to a generic
+    // listing instead of a specific match (confirmed earlier in this
+    // project). Using just the last word of the name (typically the
+    // surname) gives the best chance of a usable result; the person still
+    // has to visually pick the right match themselves, since this can't
+    // be auto-verified.
+    const parts = (fullName || '').trim().split(/\s+/).filter(Boolean);
+    const lastWord = parts.length ? parts[parts.length - 1] : '';
+    return `https://geds-sage.gc.ca/en/GEDS/?pgid=008&cdn=Tz1HQyxDPUNB&sv=${encodeURIComponent(lastWord)}`;
+  }
+
+  function renderSavedTable() {
+    const sorted = [...savedTenders].sort((a, b) => {
+      const av = getSavedSortValue(a, savedSort.column);
+      const bv = getSavedSortValue(b, savedSort.column);
+      const cmp = String(av).localeCompare(String(bv), undefined, { numeric: true, sensitivity: 'base' });
+      return savedSort.dir === 'asc' ? cmp : -cmp;
+    });
+
+    if (sorted.length === 0) {
+      els.savedTableBody.innerHTML = `<tr><td colspan="6" class="saved-empty-row">No contacts saved yet — open the Tenders tab and click "Save" on any card.</td></tr>`;
+    } else {
+      els.savedTableBody.innerHTML = sorted.map((t) => {
+        const ca = t.contractingAuthority || {};
+        const isMissingInfo = !ca.title || !ca.email || !ca.phone;
+        const lookupCell = (isMissingInfo && ca.name)
+          ? `<a href="${escapeAttr(buildGedsSearchUrl(ca.name))}" target="_blank" rel="noopener" class="lookup-link" title="Search GEDS for ${escapeAttr(ca.name)}">Look up ↗</a>`
+          : '';
+        return `
+          <tr data-id="${escapeAttr(t.id)}">
+            <td>${escapeHtml(ca.department || t.organization || 'NA')}</td>
+            <td>${escapeHtml(ca.name || 'NA')}</td>
+            <td class="editable-cell" data-field="title">${escapeHtml(ca.title || 'NA')}</td>
+            <td class="editable-cell" data-field="email">${ca.email ? `<a href="mailto:${escapeAttr(ca.email)}">${escapeHtml(ca.email)}</a>` : 'NA'}</td>
+            <td class="editable-cell" data-field="phone">${escapeHtml(ca.phone || 'NA')}</td>
+            <td class="saved-actions-cell">
+              ${lookupCell}
+              <button class="remove-saved-btn" data-id="${escapeAttr(t.id)}" title="Remove">✕</button>
+            </td>
+          </tr>`;
+      }).join('');
+
+      els.savedTableBody.querySelectorAll('.remove-saved-btn').forEach((btn) => {
+        btn.addEventListener('click', (e) => removeSaved(e.target.dataset.id));
+      });
+
+      // Click-to-edit on title/email/phone cells — lets the person paste in
+      // what they found on GEDS without deleting and re-saving the row.
+      els.savedTableBody.querySelectorAll('.editable-cell').forEach((cell) => {
+        cell.addEventListener('click', () => startEditingCell(cell));
+      });
+    }
+
+    els.savedTable.querySelectorAll('th[data-sort]').forEach((th) => {
+      const arrow = th.querySelector('.sort-arrow');
+      if (th.dataset.sort === savedSort.column) {
+        arrow.textContent = savedSort.dir === 'asc' ? '▲' : '▼';
+      } else {
+        arrow.textContent = '';
+      }
+    });
+  }
+
+  els.savedTable.querySelectorAll('th[data-sort]').forEach((th) => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.sort;
+      if (savedSort.column === col) {
+        savedSort.dir = savedSort.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        savedSort = { column: col, dir: 'asc' };
+      }
+      renderSavedTable();
+    });
+  });
+
+  els.exportSavedBtn.addEventListener('click', () => {
+    if (savedTenders.length === 0) { alert('Nothing to export yet.'); return; }
+    const cols = ['Department', 'Name', 'Title', 'Email', 'Phone'];
+    const rows = savedTenders.map((t) => {
+      const ca = t.contractingAuthority || {};
+      return [ca.department || t.organization || 'NA', ca.name || 'NA', ca.title || 'NA', ca.email || 'NA', ca.phone || 'NA']
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',');
+    });
+    const csv = [cols.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `saved-contacts-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+  });
+
+  loadCategories();
+  loadSaved();
+  loadTenders();
+  // Poll every 5 minutes in case the page is left open across the daily cron run.
+  setInterval(loadTenders, 5 * 60 * 1000);
+</script>
+
+</body>
+</html>
