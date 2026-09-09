@@ -128,6 +128,7 @@
     border: 1px solid var(--line);
   }
   .btn-ghost:hover { border-color: var(--ink); color: var(--ink); background: transparent; }
+  .btn-ghost:disabled { background: var(--line); color: var(--ink-soft); cursor: default; border-color: var(--line); }
 
   main { padding: 24px clamp(16px, 5vw, 56px) 80px; max-width: 1100px; margin: 0 auto; }
 
@@ -856,6 +857,18 @@
       <div id="tester-result" class="tester-result"></div>
     </div>
 
+    <div class="tester-box" id="email-test-box">
+      <label class="filters-label">Email alerts (Resend)</label>
+      <div class="filters-hint" style="margin-bottom:8px">
+        Sends a one-off test message to <code>ALERT_EMAIL_TO</code> using the same Resend
+        config as the daily match alert. Use this after setting env vars on Vercel to
+        confirm delivery without waiting for a real new match.
+      </div>
+      <div id="email-status-line" class="filters-hint" style="margin-bottom:10px">Checking email configuration…</div>
+      <button class="btn btn-ghost" id="test-email-btn">Send test email</button>
+      <div id="email-test-result" class="tester-result"></div>
+    </div>
+
     <div class="filters-footer">
       <button class="btn-ghost-sm" id="reset-filters-btn">Reset to defaults</button>
       <button class="btn-ghost-sm" id="show-columns-btn" style="margin-left:16px">Show raw CSV columns</button>
@@ -983,6 +996,9 @@
     testKeywordInput: document.getElementById('test-keyword-input'),
     testKeywordBtn: document.getElementById('test-keyword-btn'),
     testerResult: document.getElementById('tester-result'),
+    testEmailBtn: document.getElementById('test-email-btn'),
+    emailStatusLine: document.getElementById('email-status-line'),
+    emailTestResult: document.getElementById('email-test-result'),
     showColumnsBtn: document.getElementById('show-columns-btn'),
     columnsDebug: document.getElementById('columns-debug'),
     categorySelect: document.getElementById('category-select'),
@@ -1323,9 +1339,28 @@
 
       const wipeNote = document.getElementById('version-wipe-note');
       wipeNote.style.display = workingKeywords.length === 0 ? 'block' : 'none';
+      loadEmailStatus();
     } catch (e) {
       els.filtersStatus.textContent = 'Could not load current filters.';
       els.filtersStatus.className = 'filters-status error';
+    }
+  }
+
+  async function loadEmailStatus() {
+    els.emailStatusLine.textContent = 'Checking email configuration…';
+    try {
+      const data = await fetchJson(`${API_BASE}/api/email/status`);
+      if (data.configured) {
+        els.emailStatusLine.innerHTML = `Configured${data.vercel ? ' on Vercel' : ''}: will send to <strong>${escapeHtml(data.to)}</strong> from <code>${escapeHtml(data.from)}</code>.`;
+        els.testEmailBtn.disabled = false;
+      } else {
+        const missing = (data.missing || []).map((v) => `<code>${escapeHtml(v)}</code>`).join(', ');
+        els.emailStatusLine.innerHTML = `Not configured — missing ${missing || 'environment variables'}. Set them in Vercel → Project Settings → Environment Variables, then redeploy.`;
+        els.testEmailBtn.disabled = true;
+      }
+    } catch (e) {
+      els.emailStatusLine.textContent = 'Could not check email configuration: ' + e.message;
+      els.testEmailBtn.disabled = false;
     }
   }
 
@@ -1423,6 +1458,21 @@
     if (e.key === 'Enter') {
       e.preventDefault();
       els.testKeywordBtn.click();
+    }
+  });
+
+  els.testEmailBtn.addEventListener('click', async () => {
+    els.testEmailBtn.disabled = true;
+    els.testEmailBtn.textContent = 'Sending…';
+    els.emailTestResult.textContent = 'Sending test email via Resend…';
+    try {
+      const data = await fetchJson(`${API_BASE}/api/email/test`, { method: 'POST' });
+      els.emailTestResult.innerHTML = `Sent to <strong>${escapeHtml(data.to || 'the configured address')}</strong>. Check that inbox (and spam).${data.id ? ` Resend id: <code>${escapeHtml(data.id)}</code>` : ''}`;
+    } catch (e) {
+      els.emailTestResult.innerHTML = `<span style="color:var(--red)">Send failed: ${escapeHtml(e.message)}</span>`;
+    } finally {
+      els.testEmailBtn.textContent = 'Send test email';
+      await loadEmailStatus();
     }
   });
 

@@ -23,6 +23,29 @@ function isEmailConfigured() {
   return Boolean(process.env.RESEND_API_KEY && process.env.ALERT_EMAIL_TO && process.env.ALERT_EMAIL_FROM);
 }
 
+// Reports which of the three required env vars are present, without ever
+// exposing the API key. Used by the portal's "Send test email" button so
+// a missing Vercel env var is obvious instead of a silent no-op.
+function getEmailConfigStatus() {
+  const missing = [];
+  if (!process.env.RESEND_API_KEY) missing.push('RESEND_API_KEY');
+  if (!process.env.ALERT_EMAIL_TO) missing.push('ALERT_EMAIL_TO');
+  if (!process.env.ALERT_EMAIL_FROM) missing.push('ALERT_EMAIL_FROM');
+  return {
+    configured: missing.length === 0,
+    missing,
+    to: process.env.ALERT_EMAIL_TO || null,
+    from: process.env.ALERT_EMAIL_FROM || null,
+    vercel: Boolean(process.env.VERCEL),
+  };
+}
+
+function describeResendError(error) {
+  if (!error) return 'Unknown Resend error';
+  if (typeof error === 'string') return error;
+  return error.message || error.name || JSON.stringify(error);
+}
+
 function buildEmailHtml(newTenders, { rawCount, matchCount, runDate }) {
   const rows = newTenders.map((t) => {
     const sa = (t.matchedSaReferences || []).join(', ');
@@ -104,4 +127,69 @@ async function sendDailyMatchEmail(newTenders, meta) {
   }
 }
 
-module.exports = { sendDailyMatchEmail, buildEmailHtml, isEmailConfigured };
+// Sends a clearly labeled test message using the same Resend config as the
+// daily alert. Unlike sendDailyMatchEmail, this does not require any new
+// matching tenders — it's only for verifying that Vercel env vars and the
+// Resend domain/API key actually work. Never throws.
+async function sendTestEmail() {
+  const status = getEmailConfigStatus();
+  if (!status.configured) {
+    return { sent: false, reason: 'not-configured', ...status };
+  }
+
+  const sampleTenders = [{
+    title: 'Sample notice — this is a test, not a real tender',
+    url: 'https://canadabuys.canada.ca',
+    solicitationNumber: 'TEST-0001',
+    organization: 'Email configuration check',
+    matchType: 'keyword',
+    matchedSaReferences: [],
+    saDetails: [],
+    contractingAuthority: { name: 'Test contact', email: status.to, phone: '' },
+    closingDate: 'n/a',
+  }];
+
+  try {
+    const { Resend } = require('resend');
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const runDate = new Date().toISOString();
+    const where = status.vercel ? 'Vercel' : 'this server';
+
+    const { data, error } = await resend.emails.send({
+      from: process.env.ALERT_EMAIL_FROM,
+      to: process.env.ALERT_EMAIL_TO,
+      subject: `[TEST] Canada Buys Tenders: email is working (${runDate.slice(0, 10)})`,
+      html: `
+  <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:640px;margin:0 auto;">
+    <p style="background:#fef3c7;border:1px solid #f59e0b;padding:10px 12px;border-radius:6px;font-size:13px;color:#92400e;margin-bottom:16px;">
+      This is a test message from the Canada Buys Tenders portal. If you received it, Resend is configured correctly on ${where}.
+    </p>
+  </div>
+  ${buildEmailHtml(sampleTenders, { rawCount: 0, matchCount: 1, runDate })}`,
+    });
+
+    if (error) {
+      console.error('[email] Resend test returned an error:', error);
+      return {
+        sent: false,
+        reason: 'resend-error',
+        error: describeResendError(error),
+        to: status.to,
+        from: status.from,
+      };
+    }
+
+    return { sent: true, id: data && data.id, to: status.to, from: status.from };
+  } catch (err) {
+    console.error('[email] Failed to send test email:', err);
+    return { sent: false, reason: 'exception', error: err.message, to: status.to, from: status.from };
+  }
+}
+
+module.exports = {
+  sendDailyMatchEmail,
+  sendTestEmail,
+  buildEmailHtml,
+  isEmailConfigured,
+  getEmailConfigStatus,
+};

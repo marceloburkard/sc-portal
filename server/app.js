@@ -19,7 +19,7 @@ const fetch = require('node-fetch');
 const { parse } = require('csv-parse/sync');
 const path = require('path');
 const { readJson, writeJson, ensureDataFiles, isMissingBlobError } = require('./storage');
-const { sendDailyMatchEmail } = require('./email');
+const { sendDailyMatchEmail, sendTestEmail, getEmailConfigStatus } = require('./email');
 
 // Bump this string whenever you deploy a meaningful change. The portal
 // displays it in the masthead and on the /api/version endpoint, so you can
@@ -460,7 +460,32 @@ app.get('/api/health', (req, res) => {
     ok: true,
     vercel: Boolean(process.env.VERCEL),
     blobConfigured: Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID),
+    emailConfigured: getEmailConfigStatus().configured,
   });
+});
+
+// Email status / test live before Blob init so a missing store doesn't
+// block checking whether Resend env vars on Vercel actually work.
+app.get('/api/email/status', (req, res) => {
+  res.json(getEmailConfigStatus());
+});
+
+app.post('/api/email/test', async (req, res) => {
+  const result = await sendTestEmail();
+  if (!result.sent && result.reason === 'not-configured') {
+    const missing = (result.missing || []).join(', ') || 'RESEND_API_KEY, ALERT_EMAIL_TO, ALERT_EMAIL_FROM';
+    return res.status(400).json({
+      ...result,
+      error: `Email is not configured. Missing: ${missing}. Set them in Vercel → Environment Variables, then redeploy.`,
+    });
+  }
+  if (!result.sent) {
+    return res.status(502).json({
+      ...result,
+      error: result.error || 'Resend rejected the test email.',
+    });
+  }
+  res.json(result);
 });
 
 let initPromise = null;

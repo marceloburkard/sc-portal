@@ -35,6 +35,13 @@ If any of these three are missing, email sending is silently skipped —
 everything else in the portal keeps working normally, this is purely
 optional. A failed send is logged but never breaks the daily fetch.
 
+To confirm the Vercel env vars actually work without waiting for a real
+new match, open **Filters ⚙** on the deployed site and click **Send test
+email**. That fires a labeled `[TEST]` message to `ALERT_EMAIL_TO` through
+the same Resend path as the daily alert. The box also shows which of the
+three variables are present (never the API key itself), so a missing or
+unverified domain shows up immediately.
+
 Each email lists the new matches only (title, solicitation number,
 organization, which signal matched — SA reference vs. keyword — contact
 info if available, and closing date), with a link straight to the notice
