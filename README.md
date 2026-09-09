@@ -1,9 +1,73 @@
 # Canada Buys Tenders
 
+## Daily email alerts (new in 1.6.0)
+
+> **Heads up:** this bumps the app version to 1.6.0, which — per the
+> "keywords reset on every new version" behavior described below — will
+> clear your saved keyword filters (and SA references) back to empty on
+> next startup. Re-open **Filters ⚙** after deploying this and re-add
+> them. Saved contacts/tenders are unaffected.
+
+The portal can now email you automatically whenever the daily check finds
+**new** tenders matching your filters (keyword or Supply Arrangement
+reference). This runs right after each fetch — the daily 9AM/scheduled
+check locally, or the Vercel cron job in production — and also after a
+manual "Check now" if that happens to turn up something new. No email is
+sent on a run that finds zero new matches, so you won't get a daily email
+just because the check ran.
+
+Sending is done via [Resend](https://resend.com) (a simple HTTPS email
+API — no SMTP setup, which fits Vercel's serverless functions better than
+raw SMTP). To turn it on:
+
+1. Create a free Resend account and generate an API key.
+2. Verify a sending domain in Resend (or use their shared testing sender
+   while trying this out).
+3. Set three environment variables (locally in `.env`, or in Vercel's
+   Project Settings → Environment Variables):
+   - `RESEND_API_KEY` — your Resend API key
+   - `ALERT_EMAIL_TO` — the address that should receive the alert (e.g.
+     `rabelo@insi.com`)
+   - `ALERT_EMAIL_FROM` — a "from" address on your verified Resend domain,
+     e.g. `Canada Buys Tenders <alerts@yourdomain.com>`
+
+If any of these three are missing, email sending is silently skipped —
+everything else in the portal keeps working normally, this is purely
+optional. A failed send is logged but never breaks the daily fetch.
+
+Each email lists the new matches only (title, solicitation number,
+organization, which signal matched — SA reference vs. keyword — contact
+info if available, and closing date), with a link straight to the notice
+where one exists.
+
 A small self-hosted tool that checks CanadaBuys' public open-data feed every
 day, filters it down using keywords you control, and shows them in a simple
 web page. No Salesforce integration, no login, no third-party service —
 everything runs on a computer or server you control.
+
+## Supply Arrangement details (SA number + streams + security level)
+
+Insi currently holds three qualified Supply Arrangements. Add their numbers as
+SA References in the Filters panel (see "Adjusting what it matches" below) —
+once added, any tender whose text mentions one of these numbers is tagged
+with an **SA MATCH** badge, and hovering it (or opening the daily email) now
+also shows which stream/category that SA covers and its security level:
+
+- **EN578-172870** — THS (Temporary Help Services), Stream 5 Computer
+  Services: 5.1 Computer Application Support, 5.2 Computer Website Support
+  (Junior/Intermediate/Senior).
+- **EN578-170432** — TBIPS (Task Based Informatics Professional Services),
+  Streams 1 (Application Services), 3 (IM/IT Services), 4 (Business
+  Services), 5 (Project Management Services) — Tier 1 & 2, all levels.
+- **E60ZT-180024** — ProServices, Streams 1, 3, 4, 5 (Ontario/Toronto),
+  all levels.
+
+None of the three source Supply Arrangements specify a fixed security level
+at the SA level — each states security requirements, if any, are set
+per-RFP via the Security Requirement Check List (SRCL) attached to that
+specific Request for Proposal. The portal reflects that honestly rather than
+inventing a clearance level: the "Security level" shown for each SA says
+this explicitly.
 
 ## What's new in 1.5.0
 

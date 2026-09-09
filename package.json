@@ -19,6 +19,7 @@
     "csv-parse": "^7.0.0",
     "express": "^5.2.1",
     "node-cron": "^4.2.1",
-    "node-fetch": "^2.7.0"
+    "node-fetch": "^2.7.0",
+    "resend": "^4.0.1"
   }
 }

@@ -930,7 +930,7 @@
   // a change to either file, so a mismatch (e.g. you copied a new
   // server.js but forgot to copy the matching index.html, or vice versa)
   // is visible in the masthead instead of silently causing confusing bugs.
-  const FRONTEND_VERSION = '1.5.0';
+  const FRONTEND_VERSION = '1.6.0';
 
   async function fetchJson(url, options) {
     const res = await fetch(url, options);
@@ -1071,7 +1071,18 @@
       const hasSaMatch = t.matchType === 'sa-reference' || t.matchType === 'both';
       if (hasSaMatch) {
         const refList = (t.matchedSaReferences || []).join(', ');
-        badge += `<span class="match-badge sa-match" title="Directly references: ${escapeAttr(refList)}">SA: ${escapeHtml(refList || '—')}</span>`;
+        // Tooltip includes stream/category + security-level detail for each
+        // matched SA (from the server's SA_CATALOG), not just the bare
+        // number — so hovering the badge tells you which stream this
+        // tender likely falls under and what security level (if any fixed
+        // one) applies.
+        const detailLines = (t.saDetails || []).map((d) => {
+          const streams = (d.streams || []).join(' | ');
+          const sec = d.securityLevel ? ` — Security: ${d.securityLevel}` : '';
+          return `${d.number}${d.label ? ' (' + d.label + ')' : ''}${streams ? ': ' + streams : ''}${sec}`;
+        }).join('\n');
+        const tooltip = detailLines || `Directly references: ${refList}`;
+        badge += `<span class="match-badge sa-match" title="${escapeAttr(tooltip)}">SA: ${escapeHtml(refList || '—')}</span>`;
       }
       if (currentScope === 'everything') {
         if (t.matchType === 'both') {

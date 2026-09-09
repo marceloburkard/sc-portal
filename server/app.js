@@ -19,14 +19,15 @@ const fetch = require('node-fetch');
 const { parse } = require('csv-parse/sync');
 const path = require('path');
 const { readJson, writeJson, ensureDataFiles, isMissingBlobError } = require('./storage');
+const { sendDailyMatchEmail } = require('./email');
 
 // Bump this string whenever you deploy a meaningful change. The portal
 // displays it in the masthead and on the /api/version endpoint, so you can
 // confirm at a glance whether a given machine is running the latest code —
 // useful when you've copied files to a remote server and want to be sure
 // the copy/restart actually took effect.
-const APP_VERSION = '1.5.0';
-const APP_VERSION_DATE = '2026-06-17';
+const APP_VERSION = '1.6.0';
+const APP_VERSION_DATE = '2026-09-09';
 
 const STORE_FILE = 'tenders.json';
 const LOG_FILE = 'fetch-log.json';
@@ -35,6 +36,63 @@ const SAVED_FILE = 'saved-tenders.json';
 const COLUMNS_FILE = 'last-columns-seen.json';
 
 const SOURCE_URL = 'https://canadabuys.canada.ca/opendata/pub/openTenderNotice-ouvertAvisAppelOffres.csv';
+
+// Reference catalog for Insi's three qualified Supply Arrangements. This is
+// NOT part of the user-editable Filters settings (those still store
+// saReferences as a plain array of SA number strings, unchanged, so the
+// existing Filters panel keeps working as-is). Instead, whenever a tender's
+// text matches one of these SA numbers, we look up its streams/categories
+// and security-level note here and attach that detail directly onto the
+// tender record (see `saDetails` below) and into the daily email — so the
+// portal search now effectively spans SA number + stream/category +
+// security level, not just the bare SA number.
+//
+// Security level note: none of the three source Supply Arrangement
+// documents specify a fixed security level at the SA level — all three
+// state security requirements (if any) are determined per-RFP via the
+// Security Requirement Check List (SRCL) attached to each individual
+// Request for Proposal, not fixed on the SA itself. That's recorded here
+// verbatim rather than inventing a specific clearance level.
+const SA_CATALOG = {
+  'EN578-172870': {
+    label: 'THS — Temporary Help Services (META IT LTD, CW2451695)',
+    streams: [
+      'Stream 5 – Computer Services: 5.1 Computer, Application Support (Junior/Intermediate/Senior)',
+      'Stream 5 – Computer Services: 5.2 Computer, Website Support (Junior/Intermediate/Senior)',
+    ],
+    securityLevel: 'None fixed at the SA level — set per-RFP via the Security Requirement Check List (SRCL).',
+  },
+  'EN578-170432': {
+    label: 'TBIPS — Task Based Informatics Professional Services (META IT LTD, CW2459728)',
+    streams: [
+      'Stream 1 (A) Application Services: Application/Software Architect, Programmer/Software Developer, Programmer/Analyst, System Analyst, Tester, WEB Architect, WEB Designer, WEB Developer, Web Graphics Designer',
+      'Stream 3 (I) IM/IT Services: Data Conversion Specialist, Database Administrator, Database Analyst, Database Modeller/IM Modeller, IM Architect, Network Analyst, Platform Analyst',
+      'Stream 4 (B) Business Services: Business Analyst',
+      'Stream 5 (P) Project Management Services: Change Management Consultant, Enterprise Architect, Project Coordinator, Project Manager',
+      '(Tier 1 & Tier 2, all Junior/Intermediate/Senior levels, across all qualified regions/metro areas)',
+    ],
+    securityLevel: 'None fixed at the SA level — set per-RFP via the Security Requirement Check List (SRCL).',
+  },
+  'E60ZT-180024': {
+    label: 'ProServices (META IT LTD, CW2454453)',
+    streams: [
+      'Stream 1 (A) Application Services: Programmer/Software Developer, Tester, WEB Architect, WEB Designer, WEB Developer',
+      'Stream 3 (I) IM/IT Services: Data Conversion Specialist, Database Administrator, Database Analyst, Database Modeller/IM Modeller, IM Architect',
+      'Stream 4 (B) Business Services: Business Analyst',
+      'Stream 5 (P) Project Management Services: Change Management Consultant, Project Coordinator, Project Manager',
+      '(Ontario & Toronto, all Junior/Intermediate/Senior/No Level)',
+    ],
+    securityLevel: 'None fixed at the SA level (may be used for contracts where security requirements are identified) — set per-RFP via the SRCL.',
+  },
+};
+
+function lookupSaDetails(matchedSaReferences) {
+  return (matchedSaReferences || [])
+    .map((ref) => {
+      const entry = SA_CATALOG[ref.trim()];
+      return entry ? { number: ref.trim(), ...entry } : { number: ref.trim() };
+    });
+}
 
 // Default filter configuration. This used to be hardcoded; it now lives in
 // server/data/settings.json so it can be edited from the portal's Filters
@@ -343,6 +401,11 @@ async function fetchAndFilter() {
         isNew,
         matchesFilter,
         matchedSaReferences, // e.g. ["EN578-172870"] if it directly referenced a qualified SA
+        // Full stream/category + security-level detail for each matched SA
+        // number, looked up from SA_CATALOG above — lets the UI/email show
+        // WHICH stream(s) a tender likely falls under and what (if any)
+        // fixed security level applies, not just the bare SA number.
+        saDetails: lookupSaDetails(matchedSaReferences),
         matchType: matchedSaReferences.length > 0
           ? (matchesKeywordSignal ? 'both' : 'sa-reference')
           : (matchesKeywordSignal ? 'keyword' : 'none'),
@@ -364,6 +427,13 @@ async function fetchAndFilter() {
     const merged = trimmed.sort((a, b) => (b.publishedDate || '').localeCompare(a.publishedDate || ''));
 
     await saveStore({ tenders: merged, lastUpdated: startedAt });
+
+    // Email alert: only the tenders that are BOTH new-since-last-check AND
+    // currently matching the saved filter (keyword or SA reference) — not
+    // every new row in the raw feed, and not a resend of yesterday's
+    // matches. One email per run, only when there's something to report.
+    const newMatches = merged.filter((t) => t.isNew && t.matchesFilter);
+    await sendDailyMatchEmail(newMatches, { rawCount, matchCount, runDate: startedAt });
   } catch (e) {
     error = e.message;
   }
@@ -630,7 +700,7 @@ app.post('/api/settings/reapply', async (req, res) => {
     const matchType = matchedSaReferences.length > 0
       ? (matchesKeywordSignal ? 'both' : 'sa-reference')
       : (matchesKeywordSignal ? 'keyword' : 'none');
-    return { ...t, matchesFilter, matchedSaReferences, matchType, isNew: false }; // re-applying doesn't count as "new"
+    return { ...t, matchesFilter, matchedSaReferences, matchType, saDetails: lookupSaDetails(matchedSaReferences), isNew: false }; // re-applying doesn't count as "new"
   });
 
   await saveStore({ tenders: updated, lastUpdated: store.lastUpdated });
