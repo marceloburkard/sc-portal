@@ -16,31 +16,31 @@ manual "Check now" if that happens to turn up something new. No email is
 sent on a run that finds zero new matches, so you won't get a daily email
 just because the check ran.
 
-Sending is done via [Resend](https://resend.com) (a simple HTTPS email
-API — no SMTP setup, which fits Vercel's serverless functions better than
-raw SMTP). To turn it on:
+Sending prefers **Gmail SMTP** when `GMAIL_USER` and `GMAIL_APP_PASSWORD`
+are set (the right fit for a few internal alerts a day). Otherwise it
+falls back to [Resend](https://resend.com). Set these in `.env` locally
+or in Vercel → Project Settings → Environment Variables:
 
-1. Create a free Resend account and generate an API key.
-2. Verify a sending domain in Resend (or use their shared testing sender
-   while trying this out).
-3. Set three environment variables (locally in `.env`, or in Vercel's
-   Project Settings → Environment Variables):
-   - `RESEND_API_KEY` — your Resend API key
-   - `ALERT_EMAIL_TO` — the address that should receive the alert (e.g.
-     `rabelo@insi.com`)
-   - `ALERT_EMAIL_FROM` — a "from" address on your verified Resend domain,
-     e.g. `Canada Buys Tenders <alerts@yourdomain.com>`
+- `ALERT_EMAIL_TO` — who receives the alert (e.g. `commercial@insi.com`)
+- `GMAIL_USER` — the Gmail (or Google Workspace) address that sends
+- `GMAIL_APP_PASSWORD` — a Google [App Password](https://myaccount.google.com/apppasswords)
+  (2-Step Verification required; the regular account password will not work)
 
-If any of these three are missing, email sending is silently skipped —
-everything else in the portal keeps working normally, this is purely
-optional. A failed send is logged but never breaks the daily fetch.
+Resend fallback, if you are not using Gmail:
+
+- `RESEND_API_KEY` — your Resend API key
+- `ALERT_EMAIL_FROM` — a "from" address on a domain verified in Resend
+  (`@gmail.com` is rejected there)
+
+If neither transport is fully configured, email sending is silently
+skipped — everything else in the portal keeps working. A failed send is
+logged but never breaks the daily fetch.
 
 To confirm the Vercel env vars actually work without waiting for a real
 new match, open **Filters ⚙** on the deployed site and click **Send test
-email**. That fires a labeled `[TEST]` message to `ALERT_EMAIL_TO` through
-the same Resend path as the daily alert. The box also shows which of the
-three variables are present (never the API key itself), so a missing or
-unverified domain shows up immediately.
+email**. That fires a labeled `[TEST]` message to `ALERT_EMAIL_TO`. The
+box shows the active provider and which variables are present (never the
+password or API key).
 
 Each email lists the new matches only (title, solicitation number,
 organization, which signal matched — SA reference vs. keyword — contact

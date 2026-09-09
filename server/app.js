@@ -473,7 +473,7 @@ app.get('/api/email/status', (req, res) => {
 app.post('/api/email/test', async (req, res) => {
   const result = await sendTestEmail();
   if (!result.sent && result.reason === 'not-configured') {
-    const missing = (result.missing || []).join(', ') || 'RESEND_API_KEY, ALERT_EMAIL_TO, ALERT_EMAIL_FROM';
+    const missing = (result.missing || []).join(', ') || 'GMAIL_USER, GMAIL_APP_PASSWORD, ALERT_EMAIL_TO';
     return res.status(400).json({
       ...result,
       error: `Email is not configured. Missing: ${missing}. Set them in Vercel → Environment Variables, then redeploy.`,
@@ -482,7 +482,7 @@ app.post('/api/email/test', async (req, res) => {
   if (!result.sent) {
     return res.status(502).json({
       ...result,
-      error: result.error || 'Resend rejected the test email.',
+      error: result.error || 'The mail provider rejected the test email.',
     });
   }
   res.json(result);

@@ -858,11 +858,13 @@
     </div>
 
     <div class="tester-box" id="email-test-box">
-      <label class="filters-label">Email alerts (Resend)</label>
+      <label class="filters-label">Email alerts</label>
       <div class="filters-hint" style="margin-bottom:8px">
-        Sends a one-off test message to <code>ALERT_EMAIL_TO</code> using the same Resend
-        config as the daily match alert. Use this after setting env vars on Vercel to
-        confirm delivery without waiting for a real new match.
+        Sends a one-off test message to <code>ALERT_EMAIL_TO</code> using the same
+        transport as the daily match alert (Gmail SMTP when
+        <code>GMAIL_USER</code> / <code>GMAIL_APP_PASSWORD</code> are set, otherwise Resend).
+        Use this after setting env vars on Vercel to confirm delivery without waiting
+        for a real new match.
       </div>
       <div id="email-status-line" class="filters-hint" style="margin-bottom:10px">Checking email configuration…</div>
       <button class="btn btn-ghost" id="test-email-btn">Send test email</button>
@@ -1351,7 +1353,8 @@
     try {
       const data = await fetchJson(`${API_BASE}/api/email/status`);
       if (data.configured) {
-        els.emailStatusLine.innerHTML = `Configured${data.vercel ? ' on Vercel' : ''}: will send to <strong>${escapeHtml(data.to)}</strong> from <code>${escapeHtml(data.from)}</code>.`;
+        const via = data.provider === 'gmail' ? 'Gmail' : (data.provider === 'resend' ? 'Resend' : 'email');
+        els.emailStatusLine.innerHTML = `Configured${data.vercel ? ' on Vercel' : ''} via ${via}: will send to <strong>${escapeHtml(data.to)}</strong> from <code>${escapeHtml(data.from)}</code>.`;
         els.testEmailBtn.disabled = false;
       } else {
         const missing = (data.missing || []).map((v) => `<code>${escapeHtml(v)}</code>`).join(', ');
