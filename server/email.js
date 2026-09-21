@@ -96,7 +96,7 @@ function buildEmailHtml(newTenders, { rawCount, matchCount, runDate }) {
             ${escapeHtml(t.solicitationNumber || '(no solicitation #)')} &middot; ${escapeHtml(t.organization || '')}
           </div>
           <div style="font-size:11px;color:#059669;margin-top:4px;font-weight:600;">
-            ${escapeHtml(badge)}${sa ? ' &mdash; ' + escapeHtml(sa) : ''}
+            ${escapeHtml(badge)}${sa ? ' &mdash; ' + escapeHtml(sa) : ''}${(t.matchedStreams || []).length ? ' &mdash; Stream ' + escapeHtml(t.matchedStreams.join(', ')) : ''}
           </div>
           ${saDetailsHtml}
           ${ca.name ? `<div style="font-size:12px;color:#374151;margin-top:4px;">Contact: ${escapeHtml(ca.name)}${ca.email ? ' &lt;' + escapeHtml(ca.email) + '&gt;' : ''}${ca.phone ? ' &middot; ' + escapeHtml(ca.phone) : ''}</div>` : ''}

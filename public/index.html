@@ -836,10 +836,10 @@
 
     <label class="filters-label" style="margin-top:22px">Supply Arrangement References</label>
     <div class="filters-hint" style="margin-bottom:8px">
-      Separate from keywords above. These are exact SA numbers Insi is qualified under (e.g. <code>EN578-172870</code> for THS).
-      A tender matching one of these is tagged on its card as a direct SA match, distinct from a general keyword match —
-      useful because SA numbers don't always appear in the feed text (sometimes only the keyword signal catches a tender,
-      sometimes only the SA reference does), so both run together rather than one replacing the other.
+      Separate from keywords above. These are the SA / contract numbers Insi is qualified under
+      (<code>EN578-172870</code> / <code>CW2451695</code> THS, <code>EN578-170432</code> / <code>CW2459728</code> TBIPS,
+      <code>E60ZT-180024</code> / <code>CW2454453</code> ProServices). A notice is kept only when it names a
+      stream or category from those SAs — e.g. THS 5.1 / 5.2, not Stream 1.2 or 12.8; TBIPS not Stream 2 / 6 / 7.
     </div>
     <div id="sa-reference-list" class="keyword-list"></div>
     <div class="add-keyword-row">
@@ -945,7 +945,7 @@
   // a change to either file, so a mismatch (e.g. you copied a new
   // server.js but forgot to copy the matching index.html, or vice versa)
   // is visible in the masthead instead of silently causing confusing bugs.
-  const FRONTEND_VERSION = '1.6.0';
+  const FRONTEND_VERSION = '1.7.1';
 
   async function fetchJson(url, options) {
     const res = await fetch(url, options);
@@ -1099,8 +1099,14 @@
           const sec = d.securityLevel ? ` — Security: ${d.securityLevel}` : '';
           return `${d.number}${d.label ? ' (' + d.label + ')' : ''}${streams ? ': ' + streams : ''}${sec}`;
         }).join('\n');
-        const tooltip = detailLines || `Directly references: ${refList}`;
-        badge += `<span class="match-badge sa-match" title="${escapeAttr(tooltip)}">SA: ${escapeHtml(refList || '—')}</span>`;
+        const named = (t.matchedStreams || []).length
+          ? `Notice streams: ${(t.matchedStreams || []).join(', ')}`
+          : '';
+        const tooltip = [named, detailLines || `Directly references: ${refList}`].filter(Boolean).join('\n');
+        const streamLabel = (t.matchedStreams || []).length
+          ? ` · Stream ${(t.matchedStreams || []).join(', ')}`
+          : '';
+        badge += `<span class="match-badge sa-match" title="${escapeAttr(tooltip)}">SA: ${escapeHtml(refList || '—')}${escapeHtml(streamLabel)}</span>`;
       }
       if (currentScope === 'everything') {
         if (t.matchType === 'both') {
@@ -1340,7 +1346,7 @@
       els.filtersStatus.className = 'filters-status';
 
       const wipeNote = document.getElementById('version-wipe-note');
-      wipeNote.style.display = workingKeywords.length === 0 ? 'block' : 'none';
+      wipeNote.style.display = 'none';
       loadEmailStatus();
     } catch (e) {
       els.filtersStatus.textContent = 'Could not load current filters.';

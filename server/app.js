@@ -26,8 +26,8 @@ const { sendDailyMatchEmail, sendTestEmail, getEmailConfigStatus } = require('./
 // confirm at a glance whether a given machine is running the latest code —
 // useful when you've copied files to a remote server and want to be sure
 // the copy/restart actually took effect.
-const APP_VERSION = '1.6.0';
-const APP_VERSION_DATE = '2026-09-09';
+const APP_VERSION = '1.7.1';
+const APP_VERSION_DATE = '2026-09-21';
 
 const STORE_FILE = 'tenders.json';
 const LOG_FILE = 'fetch-log.json';
@@ -47,50 +47,104 @@ const SOURCE_URL = 'https://canadabuys.canada.ca/opendata/pub/openTenderNotice-o
 // portal search now effectively spans SA number + stream/category +
 // security level, not just the bare SA number.
 //
+// qualifiedStreamIds is the actual matching gate: a notice that names
+// specific streams (e.g. "Stream 1.2" / "Stream 12.8") is kept only when
+// at least one of those streams is in this list for the SA it referenced.
+// Matching the SA number alone is not enough — THS EN578-172870 covers
+// many streams Insi is not qualified for.
+//
 // Security level note: none of the three source Supply Arrangement
 // documents specify a fixed security level at the SA level — all three
 // state security requirements (if any) are determined per-RFP via the
 // Security Requirement Check List (SRCL) attached to each individual
 // Request for Proposal, not fixed on the SA itself. That's recorded here
 // verbatim rather than inventing a specific clearance level.
+// Sourced from the three active META IT LTD Supply Arrangements:
+//   THS        — CW2451695 / EN578-172870  (11 May 2026 – 31 Mar 2028)
+//   TBIPS      — CW2459728 / EN578-170432  (16 Jul 2026 – 4 Jul 2028)
+//   ProServices — CW2454453 / E60ZT-180024 (22 Jun 2026 – 4 Jul 2028)
 const SA_CATALOG = {
   'EN578-172870': {
     label: 'THS — Temporary Help Services (META IT LTD, CW2451695)',
+    contractId: 'CW2451695',
+    aliases: ['CW2451695', 'EN578-172870/C', 'EN578-172870/D'],
+    regions: ['National Capital Region (NCR)'],
     streams: [
       'Stream 5 – Computer Services: 5.1 Computer, Application Support (Junior/Intermediate/Senior)',
       'Stream 5 – Computer Services: 5.2 Computer, Website Support (Junior/Intermediate/Senior)',
     ],
+    qualifiedStreamIds: ['5', '5.1', '5.2'],
+    qualifiedCategoryIds: ['5.1', '5.2'],
     securityLevel: 'None fixed at the SA level — set per-RFP via the Security Requirement Check List (SRCL).',
   },
   'EN578-170432': {
     label: 'TBIPS — Task Based Informatics Professional Services (META IT LTD, CW2459728)',
+    contractId: 'CW2459728',
+    aliases: ['CW2459728', 'EN578-170432/A', 'EN578-170432/D'],
+    regions: ['Tier 1 & Tier 2 — NCR, Ontario, Toronto, Québec, Montreal, Western, Winnipeg, Edmonton, Calgary, Pacific, Vancouver, Victoria, Remote/Virtual Access'],
     streams: [
-      'Stream 1 (A) Application Services: Application/Software Architect, Programmer/Software Developer, Programmer/Analyst, System Analyst, Tester, WEB Architect, WEB Designer, WEB Developer, Web Graphics Designer',
-      'Stream 3 (I) IM/IT Services: Data Conversion Specialist, Database Administrator, Database Analyst, Database Modeller/IM Modeller, IM Architect, Network Analyst, Platform Analyst',
-      'Stream 4 (B) Business Services: Business Analyst',
-      'Stream 5 (P) Project Management Services: Change Management Consultant, Enterprise Architect, Project Coordinator, Project Manager',
-      '(Tier 1 & Tier 2, all Junior/Intermediate/Senior levels, across all qualified regions/metro areas)',
+      'Stream 1 (A) Application Services: A.1 Application/Software Architect, A.6 Programmer/Software Developer, A.7 Programmer/Analyst, A.8 System Analyst, A.11 Tester, A.12 WEB Architect, A.13 WEB Designer, A.14 WEB Developer, A.15 Web Graphics Designer',
+      'Stream 3 (I) IM/IT Services: I.1 Data Conversion Specialist, I.2 Database Administrator, I.3 Database Analyst, I.4 Database Modeller/IM Modeller, I.5 IM Architect, I.6 Network Analyst, I.7 Platform Analyst',
+      'Stream 4 (B) Business Services: B.1 Business Analyst',
+      'Stream 5 (P) Project Management Services: P.1 Change Management Consultant, P.2 Enterprise Architect, P.7 Project Coordinator, P.9 Project Manager',
+      '(Junior/Intermediate/Senior — not qualified for Stream 2 Geomatics, Stream 6 Cyber Protection, or Stream 7 Telecommunications)',
+    ],
+    qualifiedStreamIds: ['1', '3', '4', '5'],
+    qualifiedCategoryIds: [
+      'A.1', 'A.6', 'A.7', 'A.8', 'A.11', 'A.12', 'A.13', 'A.14', 'A.15',
+      'I.1', 'I.2', 'I.3', 'I.4', 'I.5', 'I.6', 'I.7',
+      'B.1',
+      'P.1', 'P.2', 'P.7', 'P.9',
     ],
     securityLevel: 'None fixed at the SA level — set per-RFP via the Security Requirement Check List (SRCL).',
   },
   'E60ZT-180024': {
     label: 'ProServices (META IT LTD, CW2454453)',
+    contractId: 'CW2454453',
+    aliases: ['CW2454453', 'E60ZT-180024/A', 'E60ZT-180024/C', 'E60ZT-180026'],
+    regions: ['Ontario', 'Toronto'],
     streams: [
-      'Stream 1 (A) Application Services: Programmer/Software Developer, Tester, WEB Architect, WEB Designer, WEB Developer',
-      'Stream 3 (I) IM/IT Services: Data Conversion Specialist, Database Administrator, Database Analyst, Database Modeller/IM Modeller, IM Architect',
-      'Stream 4 (B) Business Services: Business Analyst',
-      'Stream 5 (P) Project Management Services: Change Management Consultant, Project Coordinator, Project Manager',
-      '(Ontario & Toronto, all Junior/Intermediate/Senior/No Level)',
+      'Stream 1 (A) Application Services: 1.6 Programmer/Software Developer, 1.11 Tester, 1.12 WEB Architect, 1.13 WEB Designer, 1.14 WEB Developer',
+      'Stream 3 (I) IM/IT Services: 3.1 Data Conversion Specialist, 3.2 Database Administrator, 3.3 Database Analyst, 3.4 Database Modeller/IM Modeller, 3.5 IM Architect',
+      'Stream 4 (B) Business Services: 4.1 Business Analyst',
+      'Stream 5 (P) Project Management Services: 5.1 Change Management Consultant, 5.7 Project Coordinator, 5.9 Project Manager',
+      '(Ontario & Toronto, Junior/Intermediate/Senior/No Level)',
     ],
-    securityLevel: 'None fixed at the SA level (may be used for contracts where security requirements are identified) — set per-RFP via the SRCL.',
+    qualifiedStreamIds: ['1', '3', '4', '5'],
+    qualifiedCategoryIds: [
+      '1.6', '1.11', '1.12', '1.13', '1.14',
+      '3.1', '3.2', '3.3', '3.4', '3.5',
+      '4.1',
+      '5.1', '5.7', '5.9',
+    ],
+    securityLevel: 'None fixed at the SA level (may be used for contracts where security requirements have been identified) — set per-RFP via the SRCL.',
   },
 };
+
+function saLookupKeys(entry, number) {
+  return [number, entry.contractId, ...(entry.aliases || [])].filter(Boolean);
+}
+
+const SA_INDEX = (() => {
+  const map = new Map();
+  for (const [number, entry] of Object.entries(SA_CATALOG)) {
+    const full = { number, ...entry };
+    for (const key of saLookupKeys(entry, number)) {
+      map.set(key.toLowerCase(), full);
+    }
+  }
+  return map;
+})();
+
+function resolveSaEntry(ref) {
+  return SA_INDEX.get(String(ref || '').trim().toLowerCase()) || null;
+}
 
 function lookupSaDetails(matchedSaReferences) {
   return (matchedSaReferences || [])
     .map((ref) => {
-      const entry = SA_CATALOG[ref.trim()];
-      return entry ? { number: ref.trim(), ...entry } : { number: ref.trim() };
+      const entry = resolveSaEntry(ref);
+      return entry ? { ...entry } : { number: String(ref).trim() };
     });
 }
 
@@ -98,14 +152,10 @@ function lookupSaDetails(matchedSaReferences) {
 // server/data/settings.json so it can be edited from the portal's Filters
 // panel without touching code.
 //
-// IMPORTANT — keywords are intentionally wiped on every new version:
-// whenever APP_VERSION above doesn't match the version stamped inside
-// settings.json, loadSettings() below resets keywords to this EMPTY list
-// rather than carrying forward whatever was previously saved (and rather
-// than falling back to any "default Stream 5 keyword list" — there isn't
-// one anymore). This is deliberate: it forces a fresh, explicit keyword
-// choice after every update instead of silently inheriting old filters.
-// Bump APP_VERSION whenever you want the next startup to clear keywords.
+// Settings persist across version bumps (keywords + SA references are
+// kept). Use "Reset to defaults" in the Filters panel if you want a
+// blank slate. Bump APP_VERSION so the portal masthead shows the deploy
+// actually took effect.
 const DEFAULT_SETTINGS = {
   keywords: [],
   // SA references are tracked SEPARATELY from general keywords. These are
@@ -130,9 +180,9 @@ async function loadSettings() {
 
   try {
     if (parsed._version !== APP_VERSION) {
-      const reset = { ...DEFAULT_SETTINGS, _version: APP_VERSION };
-      await writeJson(SETTINGS_FILE, reset);
-      return reset;
+      const migrated = { ...DEFAULT_SETTINGS, ...parsed, _version: APP_VERSION };
+      await writeJson(SETTINGS_FILE, migrated);
+      return migrated;
     }
 
     return { ...DEFAULT_SETTINGS, ...parsed, _version: APP_VERSION };
@@ -210,10 +260,125 @@ function matchesKeywords(text, keywords, matchMode) {
 // distinct from a general capability-keyword match.
 function findMatchingSaReferences(text, saReferences) {
   const t = (text || '').toLowerCase();
-  return (saReferences || [])
-    .map((ref) => ref.trim())
-    .filter(Boolean)
-    .filter((ref) => t.includes(ref.toLowerCase()));
+  const matched = [];
+  const seen = new Set();
+  for (const raw of saReferences || []) {
+    const ref = String(raw || '').trim();
+    if (!ref) continue;
+    const entry = resolveSaEntry(ref);
+    const terms = entry ? saLookupKeys(entry, entry.number) : [ref];
+    const hits = terms.some((term) => t.includes(String(term).toLowerCase()));
+    if (!hits) continue;
+    const canonical = entry ? entry.number : ref;
+    if (seen.has(canonical.toLowerCase())) continue;
+    seen.add(canonical.toLowerCase());
+    matched.push(canonical);
+  }
+  return matched;
+}
+
+// Pulls stream identifiers out of notice text: "Stream 1.2", "Stream 12.8",
+// "Streams 5.1 and 5.2", French "volet 5", etc. Numbers without a
+// stream/volet prefix are ignored so we don't treat dates or solicitation
+// fragments as streams.
+function extractMentionedStreamIds(text) {
+  const t = String(text || '').toLowerCase();
+  const ids = new Set();
+  const re = /(?:streams?|volets?)\s*[:.\u2013\u2014-]?\s*(\d+(?:\.\d+)?)((?:\s*(?:,|;|\/|and|et|&)\s*(?:streams?|volets?)?\s*[:.\u2013\u2014-]?\s*\d+(?:\.\d+)?)*)/gi;
+  let m;
+  while ((m = re.exec(t))) {
+    const nums = m[0].match(/\d+(?:\.\d+)?/g) || [];
+    for (const n of nums) ids.add(n);
+  }
+  return [...ids];
+}
+
+// TBIPS-style category codes (A.1, I.6, B.1, P.9) and ProServices/THS
+// numeric categories listed on the SAs (1.6, 5.1, 5.7, …).
+function extractMentionedCategoryIds(text, candidateIds) {
+  const t = String(text || '');
+  const found = new Set();
+  const letter = t.match(/\b[AIBPaibp]\.\d+\b/g) || [];
+  for (const id of letter) found.add(id.toUpperCase());
+
+  for (const id of candidateIds || []) {
+    if (!/^\d+\.\d+$/.test(id)) continue;
+    const re = new RegExp(`(?<![0-9.])${id.replace('.', '\\.')}(?![0-9])`);
+    if (re.test(t)) found.add(id);
+  }
+  return [...found];
+}
+
+function mentionedStreamIsQualified(mentioned, qualifiedIds) {
+  return (qualifiedIds || []).some((q) => mentioned === q || q.startsWith(`${mentioned}.`));
+}
+
+function categoryIsQualified(mentioned, qualifiedIds) {
+  const needle = String(mentioned || '').toLowerCase();
+  return (qualifiedIds || []).some((q) => String(q).toLowerCase() === needle);
+}
+
+function qualifiedIdsFromEntries(entries, field) {
+  const ids = [];
+  for (const entry of entries || []) {
+    if (Array.isArray(entry[field])) ids.push(...entry[field]);
+  }
+  return ids;
+}
+
+function catalogEntriesFor(saNumbers) {
+  if (saNumbers && saNumbers.length) {
+    return saNumbers.map(resolveSaEntry).filter(Boolean);
+  }
+  return Object.entries(SA_CATALOG).map(([number, entry]) => ({ number, ...entry }));
+}
+
+function haystackFromTender(t) {
+  return `${t.solicitationNumber || ''} ${t.title || ''} ${t.description || ''} ${t.gsin || ''} ${t.category || ''}`;
+}
+
+// A tender matches if (keyword OR SA-number) AND, when it names specific
+// streams or categories, at least one of those is one Insi is qualified for
+// under the referenced SA. Example rejected: EN578-172870 + Stream 1.2 +
+// Stream 12.8. Example kept: the same SA + Stream 5.1.
+function evaluateTenderMatch(haystack, settings) {
+  const saHits = findMatchingSaReferences(haystack, settings.saReferences);
+  const entries = catalogEntriesFor(saHits);
+  const qualifiedStreamIds = qualifiedIdsFromEntries(entries, 'qualifiedStreamIds');
+  const qualifiedCategoryIds = qualifiedIdsFromEntries(entries, 'qualifiedCategoryIds');
+
+  const mentionedStreams = extractMentionedStreamIds(haystack);
+  const mentionedCategories = extractMentionedCategoryIds(haystack, qualifiedCategoryIds);
+
+  let namedOk = true;
+  if (mentionedCategories.length > 0) {
+    namedOk = mentionedCategories.some((c) => categoryIsQualified(c, qualifiedCategoryIds));
+  } else if (mentionedStreams.length > 0) {
+    namedOk = mentionedStreams.some((m) => mentionedStreamIsQualified(m, qualifiedStreamIds));
+  }
+
+  const matchedSaReferences = namedOk ? saHits : [];
+  const matchesKeywordSignal = namedOk && matchesKeywords(haystack, settings.keywords, settings.matchMode);
+  const matchesFilter = matchesKeywordSignal || matchedSaReferences.length > 0;
+
+  const matchedStreams = [
+    ...mentionedStreams.filter((m) => mentionedStreamIsQualified(m, qualifiedStreamIds)),
+    ...mentionedCategories.filter((c) => categoryIsQualified(c, qualifiedCategoryIds)),
+  ];
+
+  const matchType = matchedSaReferences.length > 0
+    ? (matchesKeywordSignal ? 'both' : 'sa-reference')
+    : (matchesKeywordSignal ? 'keyword' : 'none');
+
+  return {
+    matchesFilter,
+    matchedSaReferences,
+    mentionedStreams,
+    mentionedCategories,
+    matchedStreams,
+    matchType,
+    saDetails: lookupSaDetails(matchedSaReferences),
+  };
 }
 
 async function fetchAndFilter() {
@@ -356,25 +521,20 @@ async function fetchAndFilter() {
       ]);
 
       const haystack = `${solNum} ${title} ${titleFr} ${description} ${gsin} ${categoryRaw}`;
-      // A tender matches if EITHER its keywords match OR it directly
-      // references one of our qualified Supply Arrangement numbers. These
-      // are two distinct signals (see findMatchingSaReferences above) kept
-      // separate so the UI can show WHICH one fired, rather than collapsing
-      // both into a single unlabeled "matchesFilter" boolean.
-      const matchedSaReferences = findMatchingSaReferences(haystack, settings.saReferences);
-      const matchesKeywordSignal = matchesKeywords(haystack, settings.keywords, settings.matchMode);
-      const matchesFilter = matchesKeywordSignal || matchedSaReferences.length > 0;
+      // Keyword and SA-number signals, gated by Insi's qualified streams
+      // when the notice names specific streams (see evaluateTenderMatch).
+      const match = evaluateTenderMatch(haystack, settings);
 
       const id = (solNum || title || '').slice(0, 40) + '|' + (title || '').slice(0, 80);
-      const isNew = matchesFilter && !existingIds.has(id);
+      const isNew = match.matchesFilter && !existingIds.has(id);
       if (isNew) newCount++;
-      if (matchesFilter) matchCount++;
+      if (match.matchesFilter) matchCount++;
 
       allRows.push({
         id,
         solicitationNumber: solNum,
         title: title || '(no title)',
-        description: (description || '').slice(0, 600),
+        description: (description || '').slice(0, 2500),
         gsin,
         // IMPORTANT: do NOT fall back to GSIN here. GSIN is a separate,
         // much more granular classification system and mixing it into the
@@ -399,16 +559,7 @@ async function fetchAndFilter() {
         firstSeenAt: isNew ? startedAt : (store.tenders.find((t) => t.id === id) || {}).firstSeenAt || startedAt,
         lastSeenAt: startedAt,
         isNew,
-        matchesFilter,
-        matchedSaReferences, // e.g. ["EN578-172870"] if it directly referenced a qualified SA
-        // Full stream/category + security-level detail for each matched SA
-        // number, looked up from SA_CATALOG above — lets the UI/email show
-        // WHICH stream(s) a tender likely falls under and what (if any)
-        // fixed security level applies, not just the bare SA number.
-        saDetails: lookupSaDetails(matchedSaReferences),
-        matchType: matchedSaReferences.length > 0
-          ? (matchesKeywordSignal ? 'both' : 'sa-reference')
-          : (matchesKeywordSignal ? 'keyword' : 'none'),
+        ...match,
       });
     }
 
@@ -508,7 +659,14 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.get('/api/tenders', async (req, res) => {
   const store = await loadStore();
-  res.json({ ...store, appVersion: APP_VERSION, appVersionDate: APP_VERSION_DATE });
+  const settings = await loadSettings();
+  // Re-score on read so a deploy of stream-qualification logic takes
+  // effect immediately, without waiting for the next fetch / Save filters.
+  const tenders = (store.tenders || []).map((t) => ({
+    ...t,
+    ...evaluateTenderMatch(haystackFromTender(t), settings),
+  }));
+  res.json({ ...store, tenders, appVersion: APP_VERSION, appVersionDate: APP_VERSION_DATE });
 });
 
 app.get('/api/categories', async (req, res) => {
@@ -717,16 +875,11 @@ app.post('/api/settings/reapply', async (req, res) => {
   const store = await loadStore();
   const now = new Date().toISOString();
 
-  const updated = store.tenders.map((t) => {
-    const haystack = `${t.solicitationNumber} ${t.title} ${t.description} ${t.gsin} ${t.category || ''}`;
-    const matchedSaReferences = findMatchingSaReferences(haystack, settings.saReferences);
-    const matchesKeywordSignal = matchesKeywords(haystack, settings.keywords, settings.matchMode);
-    const matchesFilter = matchesKeywordSignal || matchedSaReferences.length > 0;
-    const matchType = matchedSaReferences.length > 0
-      ? (matchesKeywordSignal ? 'both' : 'sa-reference')
-      : (matchesKeywordSignal ? 'keyword' : 'none');
-    return { ...t, matchesFilter, matchedSaReferences, matchType, saDetails: lookupSaDetails(matchedSaReferences), isNew: false }; // re-applying doesn't count as "new"
-  });
+  const updated = store.tenders.map((t) => ({
+    ...t,
+    ...evaluateTenderMatch(haystackFromTender(t), settings),
+    isNew: false, // re-applying doesn't count as "new"
+  }));
 
   await saveStore({ tenders: updated, lastUpdated: store.lastUpdated });
   await appendLog({
@@ -804,4 +957,6 @@ module.exports = {
   ensureInitialized,
   APP_VERSION,
   APP_VERSION_DATE,
+  extractMentionedStreamIds,
+  evaluateTenderMatch,
 };
