@@ -209,16 +209,13 @@ function accessRequestLines(tender) {
 
 function buildAccessRequestDraft(tender) {
   const ca = tender.contractingAuthority || {};
-  const firstName = String(ca.name || '').trim().split(/\s+/)[0] || 'Hello';
   const sol = tender.solicitationNumber || '(no solicitation number)';
   const title = tender.title || 'Untitled notice';
-  const lines = accessRequestLines(tender);
+  const saLine = accessRequestLines(tender).join(' ');
   const body = [
-    `${firstName}, good evening,`,
+    'Hello,',
     '',
-    'Meta IT Ltd ( known as Insi.com ) is active to receive RFPs from the government of canada:',
-    '',
-    lines.join('\n\n'),
+    `Meta IT Ltd ( known as Insi.com ) is active to receive RFPs from the Government of Canada: ${saLine}`,
     '',
     'Unfortunately, we were not called in the recent tender :',
     '',
