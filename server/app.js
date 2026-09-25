@@ -298,10 +298,12 @@ async function reviewNoticePage(tender) {
       timeout: NOTICE_FETCH_TIMEOUT_MS,
     });
     if (!res.ok) {
+      if (tender.description) return classifyNoticeText(tender, link, tender.description);
       return { ...base, status: 'unread', note: `The tender page could not be read (HTTP ${res.status}).` };
     }
     return classifyNoticeText(tender, link, htmlToText(await res.text()));
   } catch (err) {
+    if (tender.description) return classifyNoticeText(tender, link, tender.description);
     return { ...base, status: 'unread', note: 'The tender page could not be read.' };
   }
 }
