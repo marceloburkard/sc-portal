@@ -317,6 +317,39 @@ async function reviewNewMatches(tenders) {
   }
 }
 
+// Re-sends the alert for matches first seen on the UTC day of the latest
+// check. Used when that day's email already went out in an older format.
+async function resendLatestDayAlert() {
+  const store = await loadStore();
+  const seenDays = store.tenders
+    .filter((t) => t.matchesFilter && t.firstSeenAt)
+    .map((t) => t.firstSeenAt.slice(0, 10));
+  const day = seenDays.sort().slice(-1)[0];
+  const targets = store.tenders.filter((t) => t.matchesFilter && (t.firstSeenAt || '').startsWith(day));
+  for (const tender of targets) {
+    tender.isNew = true;
+    tender.noticeReview = null;
+  }
+  await reviewNewMatches(store.tenders);
+  await saveStore(store);
+  const email = await sendDailyMatchEmail(targets, {
+    rawCount: 0,
+    matchCount: targets.length,
+    runDate: new Date().toISOString(),
+  });
+  return {
+    day,
+    count: targets.length,
+    solicitations: targets.map((t) => t.solicitationNumber),
+    reviews: targets.map((t) => ({
+      solicitationNumber: t.solicitationNumber,
+      status: t.noticeReview && t.noticeReview.status,
+      link: t.noticeReview && t.noticeReview.link,
+    })),
+    email,
+  };
+}
+
 // Default filter configuration. This used to be hardcoded; it now lives in
 // server/data/settings.json so it can be edited from the portal's Filters
 // panel without touching code.
@@ -1098,6 +1131,14 @@ app.post('/api/settings/test-keyword', async (req, res) => {
 
 // Vercel Cron Jobs call this route daily. Locally, node-cron in server.js
 // triggers fetchAndFilter() instead.
+app.post('/api/email/resend-latest', async (req, res) => {
+  const result = await resendLatestDayAlert();
+  if (!result.email || !result.email.sent) {
+    return res.status(502).json(result);
+  }
+  res.json(result);
+});
+
 app.get('/api/cron/refresh', async (req, res) => {
   if (process.env.CRON_SECRET) {
     const auth = req.headers.authorization;
