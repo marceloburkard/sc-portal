@@ -237,8 +237,26 @@ function buildAccessRequestDraft(tender) {
   };
 }
 
+async function resolveNoticeLink(tender) {
+  if (tender && tender.url) return tender.url;
+  const search = tenderPublicLink(tender);
+  try {
+    const res = await fetch(search, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (THS-Stream5-Tracker/1.0)' },
+      timeout: NOTICE_FETCH_TIMEOUT_MS,
+    });
+    if (!res.ok) return search;
+    const html = await res.text();
+    const match = html.match(/href="(\/en\/tender-opportunities\/tender-notice\/[^"]+)"/i);
+    if (!match) return search;
+    return `https://canadabuys.canada.ca${match[1]}`;
+  } catch (err) {
+    return search;
+  }
+}
+
 async function reviewNoticePage(tender) {
-  const link = tenderPublicLink(tender);
+  const link = await resolveNoticeLink(tender);
   const base = { link, draft: null, checkedAt: new Date().toISOString() };
   try {
     const res = await fetch(link, {
