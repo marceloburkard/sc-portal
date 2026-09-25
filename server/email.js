@@ -71,6 +71,44 @@ function describeSendError(error) {
   return error.message || error.name || JSON.stringify(error);
 }
 
+function tenderAlertLink(tender) {
+  if (tender.noticeReview && tender.noticeReview.link) return tender.noticeReview.link;
+  if (tender.url) return tender.url;
+  const words = tender.solicitationNumber || tender.title || '';
+  return `https://canadabuys.canada.ca/en/tender-opportunities?search_filter=&record_per_page=50&current_tab=t&words=${encodeURIComponent(words)}`;
+}
+
+function noticeReviewHtml(tender) {
+  const review = tender.noticeReview;
+  if (!review) return '';
+
+  const bannerColor = review.status === 'indigenous'
+    ? { bg: '#fef3c7', border: '#f59e0b', text: '#92400e' }
+    : review.status === 'not-invited'
+      ? { bg: '#eff6ff', border: '#2563eb', text: '#1e3a8a' }
+      : { bg: '#f3f4f6', border: '#d1d5db', text: '#374151' };
+
+  const draft = review.draft;
+  const recipient = draft
+    ? (draft.to
+      ? `${escapeHtml(draft.toName || 'Contracting authority')} &lt;${escapeHtml(draft.to)}&gt;`
+      : 'Not listed on the notice')
+    : '';
+
+  const draftHtml = draft ? `
+          <div style="margin-top:8px;padding:8px 10px;background:#ffffff;border:1px solid #dbeafe;border-radius:4px;">
+            <div style="font-size:12px;color:#1e3a8a;"><strong>Proposed recipient:</strong> ${recipient}</div>
+            <div style="font-size:12px;color:#1e3a8a;margin-top:4px;"><strong>Proposed subject:</strong> ${escapeHtml(draft.subject)}</div>
+            <pre style="margin:8px 0 0;white-space:pre-wrap;font-family:Consolas,monospace;font-size:12px;color:#111827;">${escapeHtml(draft.body)}</pre>
+          </div>` : '';
+
+  return `
+          <div style="margin-top:8px;padding:8px 10px;background:${bannerColor.bg};border:1px solid ${bannerColor.border};border-radius:4px;font-size:12px;color:${bannerColor.text};">
+            ${escapeHtml(review.note || '')}
+            ${draftHtml}
+          </div>`;
+}
+
 function buildEmailHtml(newTenders, { rawCount, matchCount, runDate }) {
   const rows = newTenders.map((t) => {
     const sa = (t.matchedSaReferences || []).join(', ');
@@ -80,6 +118,7 @@ function buildEmailHtml(newTenders, { rawCount, matchCount, runDate }) {
         ? 'SA MATCH'
         : 'KEYWORD MATCH';
     const ca = t.contractingAuthority || {};
+    const link = tenderAlertLink(t);
     const saDetailsHtml = (t.saDetails || []).map((d) => `
           <div style="font-size:11px;color:#374151;margin-top:6px;padding:6px 8px;background:#f3f4f6;border-radius:4px;">
             <div style="font-weight:600;">${escapeHtml(d.number)}${d.label ? ' — ' + escapeHtml(d.label) : ''}</div>
@@ -90,7 +129,10 @@ function buildEmailHtml(newTenders, { rawCount, matchCount, runDate }) {
       <tr>
         <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;">
           <div style="font-weight:600;font-size:14px;color:#111827;">
-            ${t.url ? `<a href="${escapeHtml(t.url)}" style="color:#2563eb;text-decoration:none;">${escapeHtml(t.title)}</a>` : escapeHtml(t.title)}
+            <a href="${escapeHtml(link)}" style="color:#2563eb;text-decoration:none;">${escapeHtml(t.title)}</a>
+          </div>
+          <div style="font-size:12px;margin-top:4px;">
+            <a href="${escapeHtml(link)}" style="color:#2563eb;">Open this tender</a>
           </div>
           <div style="font-size:12px;color:#6b7280;margin-top:2px;">
             ${escapeHtml(t.solicitationNumber || '(no solicitation #)')} &middot; ${escapeHtml(t.organization || '')}
@@ -101,6 +143,7 @@ function buildEmailHtml(newTenders, { rawCount, matchCount, runDate }) {
           ${saDetailsHtml}
           ${ca.name ? `<div style="font-size:12px;color:#374151;margin-top:4px;">Contact: ${escapeHtml(ca.name)}${ca.email ? ' &lt;' + escapeHtml(ca.email) + '&gt;' : ''}${ca.phone ? ' &middot; ' + escapeHtml(ca.phone) : ''}</div>` : ''}
           <div style="font-size:12px;color:#6b7280;margin-top:4px;">Closes: ${escapeHtml(t.closingDate || 'unknown')}</div>
+          ${noticeReviewHtml(t)}
         </td>
       </tr>`;
   }).join('');
@@ -209,6 +252,17 @@ async function sendTestEmail() {
     saDetails: [],
     contractingAuthority: { name: 'Test contact', email: status.to, phone: '' },
     closingDate: 'n/a',
+    noticeReview: {
+      status: 'not-invited',
+      link: 'https://canadabuys.canada.ca',
+      note: 'Meta IT / Insi was not on the invited-supplier list.',
+      draft: {
+        to: status.to,
+        toName: 'Test contact',
+        subject: 'Request for RFP access — TEST-0001',
+        body: 'Test contact, good evening,\n\nThis is a sample access-request draft, not a real tender.',
+      },
+    },
   }];
 
   const runDate = new Date().toISOString();

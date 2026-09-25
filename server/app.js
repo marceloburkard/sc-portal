@@ -26,8 +26,8 @@ const { sendDailyMatchEmail, sendTestEmail, getEmailConfigStatus } = require('./
 // confirm at a glance whether a given machine is running the latest code —
 // useful when you've copied files to a remote server and want to be sure
 // the copy/restart actually took effect.
-const APP_VERSION = '1.7.1';
-const APP_VERSION_DATE = '2026-09-21';
+const APP_VERSION = '1.8.0';
+const APP_VERSION_DATE = '2026-09-25';
 
 const STORE_FILE = 'tenders.json';
 const LOG_FILE = 'fetch-log.json';
@@ -76,6 +76,7 @@ const SA_CATALOG = {
     qualifiedStreamIds: ['5', '5.1', '5.2'],
     qualifiedCategoryIds: ['5.1', '5.2'],
     securityLevel: 'None fixed at the SA level — set per-RFP via the Security Requirement Check List (SRCL).',
+    accessRequestLine: 'EN578-172870 (THS), SA No. CW2451695, awarded 11/05/2026, valid to 31/03/2028 — currently active.',
   },
   'EN578-170432': {
     label: 'TBIPS — Task Based Informatics Professional Services (META IT LTD, CW2459728)',
@@ -97,6 +98,7 @@ const SA_CATALOG = {
       'P.1', 'P.2', 'P.7', 'P.9',
     ],
     securityLevel: 'None fixed at the SA level — set per-RFP via the Security Requirement Check List (SRCL).',
+    accessRequestLine: 'EN578-170432/D (Period 37 Refresh), Tiers 1 and 2, SA No. CW2459728, awarded 16/07/2026, valid to 04/07/2028 — currently active.',
   },
   'E60ZT-180024': {
     label: 'ProServices (META IT LTD, CW2454453)',
@@ -118,6 +120,7 @@ const SA_CATALOG = {
       '5.1', '5.7', '5.9',
     ],
     securityLevel: 'None fixed at the SA level (may be used for contracts where security requirements have been identified) — set per-RFP via the SRCL.',
+    accessRequestLine: 'E60ZT-180024 (ProServices), SA No. CW2454453, awarded 22/06/2026, valid to 04/07/2028 — currently active.',
   },
 };
 
@@ -146,6 +149,154 @@ function lookupSaDetails(matchedSaReferences) {
       const entry = resolveSaEntry(ref);
       return entry ? { ...entry } : { number: String(ref).trim() };
     });
+}
+
+const MAX_NOTICE_REVIEWS = 8;
+const NOTICE_FETCH_TIMEOUT_MS = 8000;
+
+const INDIGENOUS_PATTERNS = [
+  /indigenous\s+sa\s+holders?/i,
+  /only\s+tbips\s+indigenous/i,
+  /indigenous\s+supply\s+arrangement/i,
+  /aboriginal\s+tbips/i,
+  /aboriginal\s+supply\s+arrangement/i,
+  /set-aside program for aboriginal business/i,
+  /procurement strategy for aboriginal business/i,
+  /set aside for aboriginal/i,
+];
+
+function tenderPublicLink(tender) {
+  if (tender && tender.url) return tender.url;
+  const words = (tender && (tender.solicitationNumber || tender.title)) || '';
+  return `https://canadabuys.canada.ca/en/tender-opportunities?search_filter=&record_per_page=50&current_tab=t&words=${encodeURIComponent(words)}`;
+}
+
+function htmlToText(html) {
+  return String(html || '')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&quot;/gi, '"')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isIndigenousSetAside(text) {
+  return INDIGENOUS_PATTERNS.some((re) => re.test(text));
+}
+
+function companyIsInvited(text) {
+  return /meta\s+it/i.test(text) || /\binsi\b/i.test(text);
+}
+
+function hasInviteList(text) {
+  return /invited to submit a proposal/i.test(text)
+    || /sa holders have been invited/i.test(text);
+}
+
+function accessRequestLines(tender) {
+  const matched = lookupSaDetails(tender.matchedSaReferences)
+    .map((d) => d.accessRequestLine)
+    .filter(Boolean);
+  if (matched.length) return matched;
+  return Object.values(SA_CATALOG).map((entry) => entry.accessRequestLine).filter(Boolean);
+}
+
+function buildAccessRequestDraft(tender) {
+  const ca = tender.contractingAuthority || {};
+  const firstName = String(ca.name || '').trim().split(/\s+/)[0] || 'Hello';
+  const sol = tender.solicitationNumber || '(no solicitation number)';
+  const title = tender.title || 'Untitled notice';
+  const lines = accessRequestLines(tender);
+  const body = [
+    `${firstName}, good evening,`,
+    '',
+    'Meta IT Ltd ( known as Insi.com ) is active to receive RFPs from the government of canada:',
+    '',
+    lines.join('\n\n'),
+    '',
+    'Unfortunately, we were not called in the recent tender :',
+    '',
+    `${title} Solicitation number ${sol}`,
+    '',
+    'Can you please provide the RFP and consider include our company in the next tenders.',
+    '',
+    'Thank you very much.',
+  ].join('\n');
+
+  return {
+    to: (ca.email || '').trim(),
+    toName: (ca.name || '').trim(),
+    subject: `Request for RFP access — ${sol}`,
+    body,
+  };
+}
+
+async function reviewNoticePage(tender) {
+  const link = tenderPublicLink(tender);
+  const base = { link, draft: null, checkedAt: new Date().toISOString() };
+  try {
+    const res = await fetch(link, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (THS-Stream5-Tracker/1.0)' },
+      timeout: NOTICE_FETCH_TIMEOUT_MS,
+    });
+    if (!res.ok) {
+      return { ...base, status: 'unread', note: `The tender page could not be read (HTTP ${res.status}).` };
+    }
+    const text = htmlToText(await res.text());
+    if (isIndigenousSetAside(text)) {
+      return {
+        ...base,
+        status: 'indigenous',
+        note: 'Indigenous set-aside — only indigenous SA holders can compete. Meta IT / Insi is not eligible, so this is not worth pursuing.',
+      };
+    }
+    if (!hasInviteList(text)) {
+      return {
+        ...base,
+        status: 'no-invite-list',
+        note: 'The invited-supplier list was not found on the page, so this notice was not treated as a missed invitation.',
+      };
+    }
+    if (companyIsInvited(text)) {
+      return {
+        ...base,
+        status: 'invited',
+        note: 'Meta IT / Insi is already on the invited-supplier list.',
+      };
+    }
+    return {
+      ...base,
+      status: 'not-invited',
+      note: 'Meta IT / Insi was not on the invited-supplier list.',
+      draft: buildAccessRequestDraft(tender),
+    };
+  } catch (err) {
+    return { ...base, status: 'unread', note: 'The tender page could not be read.' };
+  }
+}
+
+async function reviewNewMatches(tenders) {
+  const pending = tenders.filter((t) => t.isNew && t.matchesFilter && !t.noticeReview);
+  for (let i = 0; i < pending.length; i++) {
+    const tender = pending[i];
+    if (i >= MAX_NOTICE_REVIEWS) {
+      tender.noticeReview = {
+        link: tenderPublicLink(tender),
+        draft: null,
+        status: 'skipped',
+        note: 'This notice was not opened automatically because too many new matches arrived in one check.',
+        checkedAt: new Date().toISOString(),
+      };
+      continue;
+    }
+    tender.noticeReview = await reviewNoticePage(tender);
+  }
 }
 
 // Default filter configuration. This used to be hardcoded; it now lives in
@@ -526,6 +677,7 @@ async function fetchAndFilter() {
       const match = evaluateTenderMatch(haystack, settings);
 
       const id = (solNum || title || '').slice(0, 40) + '|' + (title || '').slice(0, 80);
+      const existing = store.tenders.find((t) => t.id === id) || {};
       const isNew = match.matchesFilter && !existingIds.has(id);
       if (isNew) newCount++;
       if (match.matchesFilter) matchCount++;
@@ -556,9 +708,10 @@ async function fetchAndFilter() {
           email: contactEmail || '',
           phone: contactPhone || '',
         },
-        firstSeenAt: isNew ? startedAt : (store.tenders.find((t) => t.id === id) || {}).firstSeenAt || startedAt,
+        firstSeenAt: isNew ? startedAt : existing.firstSeenAt || startedAt,
         lastSeenAt: startedAt,
         isNew,
+        noticeReview: existing.noticeReview || null,
         ...match,
       });
     }
@@ -576,6 +729,12 @@ async function fetchAndFilter() {
     }
 
     const merged = trimmed.sort((a, b) => (b.publishedDate || '').localeCompare(a.publishedDate || ''));
+
+    // Open only the new matching notices. The invited-supplier list and
+    // indigenous set-aside wording live on the CanadaBuys page, not in
+    // the CSV. The review is stored on the tender so the portal can show
+    // it after the alert email is gone.
+    await reviewNewMatches(merged);
 
     await saveStore({ tenders: merged, lastUpdated: startedAt });
 
@@ -959,4 +1118,9 @@ module.exports = {
   APP_VERSION_DATE,
   extractMentionedStreamIds,
   evaluateTenderMatch,
+  isIndigenousSetAside,
+  companyIsInvited,
+  hasInviteList,
+  buildAccessRequestDraft,
+  tenderPublicLink,
 };

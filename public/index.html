@@ -241,6 +241,45 @@
     line-height: 1.55;
     margin: 10px 0 12px;
   }
+  .notice-review {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .notice-review.indigenous {
+    background: #F8EFD6;
+    border: 1px solid var(--amber);
+    color: #6B4A0C;
+  }
+  .notice-review.not-invited {
+    background: #EEF3F8;
+    border: 1px solid #8AA0B8;
+    color: var(--ink);
+  }
+  .notice-review.invited,
+  .notice-review.no-invite-list,
+  .notice-review.unread,
+  .notice-review.skipped {
+    background: #F3F1EB;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+  }
+  .notice-review-draft {
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+  .notice-review-draft pre {
+    margin: 8px 0 0;
+    white-space: pre-wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink);
+  }
   .tender-meta-row {
     display: flex;
     gap: 18px;
@@ -1040,6 +1079,28 @@
     return 'open';
   }
 
+  function noticeReviewBlock(t) {
+    const review = t.noticeReview;
+    if (!review || !review.status) return '';
+    const draft = review.draft;
+    const recipient = draft
+      ? (draft.to
+        ? `${escapeHtml(draft.toName || 'Contracting authority')} &lt;${escapeHtml(draft.to)}&gt;`
+        : 'Not listed on the notice')
+      : '';
+    const draftHtml = draft ? `
+      <div class="notice-review-draft">
+        <div><strong>Proposed recipient:</strong> ${recipient}</div>
+        <div><strong>Proposed subject:</strong> ${escapeHtml(draft.subject)}</div>
+        <pre>${escapeHtml(draft.body)}</pre>
+      </div>` : '';
+    return `
+      <div class="notice-review ${escapeAttr(review.status)}">
+        ${escapeHtml(review.note || '')}
+        ${draftHtml}
+      </div>`;
+  }
+
   function render() {
     const q = currentSearch.trim().toLowerCase();
     let scoped = currentScope === 'matches'
@@ -1155,6 +1216,7 @@
             </div>
           </a>
           ${t.description ? `<div class="tender-desc">${escapeHtml(t.description)}${t.description.length >= 600 ? '…' : ''}</div>` : ''}
+          ${noticeReviewBlock(t)}
           ${caBlock}
           <div class="tender-meta-row">
             <span>Published: <strong>${t.publishedDate ? new Date(t.publishedDate).toLocaleDateString('en-CA') : '—'}</strong></span>
