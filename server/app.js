@@ -255,19 +255,9 @@ async function resolveNoticeLink(tender) {
   }
 }
 
-async function reviewNoticePage(tender) {
-  const link = await resolveNoticeLink(tender);
+function classifyNoticeText(tender, link, text) {
   const base = { link, draft: null, checkedAt: new Date().toISOString() };
-  try {
-    const res = await fetch(link, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (THS-Stream5-Tracker/1.0)' },
-      timeout: NOTICE_FETCH_TIMEOUT_MS,
-    });
-    if (!res.ok) {
-      return { ...base, status: 'unread', note: `The tender page could not be read (HTTP ${res.status}).` };
-    }
-    const text = htmlToText(await res.text());
-    if (isIndigenousSetAside(text)) {
+  if (isIndigenousSetAside(text)) {
       return {
         ...base,
         status: 'indigenous',
@@ -288,12 +278,29 @@ async function reviewNoticePage(tender) {
         note: 'Meta IT / Insi is already on the invited-supplier list.',
       };
     }
-    return {
-      ...base,
-      status: 'not-invited',
-      note: 'Meta IT / Insi was not on the invited-supplier list.',
-      draft: buildAccessRequestDraft(tender),
-    };
+  return {
+    ...base,
+    status: 'not-invited',
+    note: 'Meta IT / Insi was not on the invited-supplier list.',
+    draft: buildAccessRequestDraft(tender),
+  };
+}
+
+async function reviewNoticePage(tender) {
+  const link = await resolveNoticeLink(tender);
+  const base = { link, draft: null, checkedAt: new Date().toISOString() };
+  try {
+    const res = await fetch(link, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+        'Accept': 'text/html',
+      },
+      timeout: NOTICE_FETCH_TIMEOUT_MS,
+    });
+    if (!res.ok) {
+      return { ...base, status: 'unread', note: `The tender page could not be read (HTTP ${res.status}).` };
+    }
+    return classifyNoticeText(tender, link, htmlToText(await res.text()));
   } catch (err) {
     return { ...base, status: 'unread', note: 'The tender page could not be read.' };
   }
@@ -319,7 +326,7 @@ async function reviewNewMatches(tenders) {
 
 // Re-sends the alert for matches first seen on the UTC day of the latest
 // check. Used when that day's email already went out in an older format.
-async function resendLatestDayAlert() {
+async function resendLatestDayAlert(pageTextBySolicitation = {}) {
   const store = await loadStore();
   const seenDays = store.tenders
     .filter((t) => t.matchesFilter && t.firstSeenAt)
@@ -331,6 +338,12 @@ async function resendLatestDayAlert() {
     tender.noticeReview = null;
   }
   await reviewNewMatches(store.tenders);
+  for (const tender of targets) {
+    const fallback = pageTextBySolicitation[tender.solicitationNumber];
+    if (fallback && tender.noticeReview && tender.noticeReview.status === 'unread') {
+      tender.noticeReview = classifyNoticeText(tender, tender.noticeReview.link, fallback);
+    }
+  }
   await saveStore(store);
   const email = await sendDailyMatchEmail(targets, {
     rawCount: 0,
@@ -1132,7 +1145,8 @@ app.post('/api/settings/test-keyword', async (req, res) => {
 // Vercel Cron Jobs call this route daily. Locally, node-cron in server.js
 // triggers fetchAndFilter() instead.
 app.post('/api/email/resend-latest', async (req, res) => {
-  const result = await resendLatestDayAlert();
+  const pageTextBySolicitation = (req.body && req.body.pageTextBySolicitation) || {};
+  const result = await resendLatestDayAlert(pageTextBySolicitation);
   if (!result.email || !result.email.sent) {
     return res.status(502).json(result);
   }
